@@ -31,7 +31,7 @@ def parse_expression(expression: str, variables: list[str], functions: list[str]
     while i < expression_length:
         char = expression[i]
 
-        if char == ' ':
+        if char == ' ' or char == ',':
             pass
         elif char == '(':
             stack_level += 1
@@ -54,7 +54,7 @@ def parse_expression(expression: str, variables: list[str], functions: list[str]
             while i < expression_length and (expression[i].isdigit() or expression[i] == '.'):
                 i += 1
             number_str = expression[start:i]
-            expression_list.append(symbol.Number(number_str))
+            expression_list.append(symbol.Number(number_str, stack_level))
 
             last_token_is_operator = False
             # Don't increment i here since the while loop already advanced it
@@ -72,7 +72,7 @@ def parse_expression(expression: str, variables: list[str], functions: list[str]
                 expression_list.append(symbol.BinaryOp(variable_str,stack_level))
                 last_token_is_operator = True 
             elif variable_str in variables:
-                expression_list.append(symbol.Variable(variable_str))
+                expression_list.append(symbol.Variable(variable_str, stack_level))
                 last_token_is_operator = False
             elif variable_str in functions:
                 expression_list.append(symbol.Function(variable_str, stack_level))
@@ -85,7 +85,22 @@ def parse_expression(expression: str, variables: list[str], functions: list[str]
 
         i += 1
 
+    assert stack_level == 0, "Unbalanced parentheses"
+
     return expression_list
 
 def create_AST (expression_list: list[symbol.Expr]):
-    pass
+    prescedence_ordering = set()
+    for expr in expression_list:
+        if expr.is_leaf() == False:
+            prescedence_ordering.add(expr)
+
+    sorted_ordering = sorted(prescedence_ordering, reverse = True)
+
+    for cur_prescedence in sorted_ordering:
+        # start with all the left associatives and then do the right
+        i = 0
+        while i < len(expression_list):
+            cur_expr = expression_list[i]
+            if cur_expr.is_leaf() == False and cur_expr.prescedence == cur_prescedence:
+                if cur_expr.type == 'unaryop':
