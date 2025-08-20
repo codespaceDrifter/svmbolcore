@@ -102,5 +102,21 @@ def create_AST (expression_list: list[symbol.Expr]):
         i = 0
         while i < len(expression_list):
             cur_expr = expression_list[i]
-            if cur_expr.is_leaf() == False and cur_expr.prescedence == cur_prescedence:
+            if cur_expr.is_leaf() == False and cur_expr.prescedence == cur_prescedence and cur_expr.left_associative == True:
                 if cur_expr.type == 'unaryop':
+                    cur_expr.operand = expression_list[i+1]
+                    del expression_list[i+1]
+                    i += 1
+                if cur_expr.type == 'binaryop':
+                    cur_expr.left_operand = expression_list[i-1]
+                    cur_expr.right_operand = expression_list[i+1]
+                    del expression_list[i-1]
+                    del expression_list[i+1]
+                    i += 1
+                if cur_expr.type == 'function':
+                    function_stack_level = cur_expr.stack_level
+                    i += 1
+                    while expression_list[i].is_leaf() == True or expression_list[i].stack_level > function_stack_level:
+                        cur_expr.operands.append(expression_list[i])
+                        del expression_list[i]
+

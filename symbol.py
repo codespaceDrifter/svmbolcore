@@ -72,7 +72,7 @@ class Function(Expr):
         self.stack_level = stack_level
         # functions are neither left nor right associative. set to True here to avoid being skipped by parser
         self.left_associative = True;
-        self.arguments = []
+        self.operands = []
         self.innate_precedence = 4;
 
     def __str__(self):
