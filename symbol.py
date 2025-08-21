@@ -6,7 +6,6 @@ class Expr:
         assert self.is_leaf() == False
         return self.innate_precedence + 5 * self.stack_level
 
-    def __str__(self): pass
 
 class Number(Expr):
     def __init__(self, value, stack_level = 0):
@@ -15,17 +14,17 @@ class Number(Expr):
         self.value = value
         self.stack_level = stack_level
     
-    def __str__(self):
-        return self.value
+    def print_tree(self, indent = 0):
+        print(' ' * indent + "└── " + self.value)
 
 class Variable(Expr):
-    self.type = 'variable'
     def __init__(self, name, stack_level = 0):
+        self.type = 'variable'
         self.name = name
         self.stack_level = stack_level
     
-    def __str__(self):
-        return self.name
+    def print_tree(self, indent = 0):
+        print(' ' * indent + "└── " + self.name)
 
 class UnaryOp(Expr):
     def __init__(self, operator: str, stack_level = 0):
@@ -34,11 +33,13 @@ class UnaryOp(Expr):
         self.operator = operator
         self.stack_level = stack_level
         self.left_associative = False;
-        self.operand = None
+        self.operands = []
         self.innate_precedence = 3;
 
-    def __str__(self):
-        return self.operator
+    def print_tree(self, indent = 0):
+        print(' ' * indent + "└── " + self.operator)
+        for operand in self.operands:
+            operand.print_tree(indent + 4)
 
 class BinaryOp(Expr):
     def __init__(self, operator, stack_level = 0):
@@ -47,8 +48,7 @@ class BinaryOp(Expr):
         self.operator = operator
         self.stack_level = stack_level
         self.left_associative = True;
-        self.left_operand = None
-        self.right_operand = None
+        self.operands = []
 
         if self.operator == '+' or operator == '-':
             self.innate_precedence = 0;
@@ -62,8 +62,10 @@ class BinaryOp(Expr):
             self.innate_precedence = 3;
             self.left_associative = False;
 
-    def __str__(self):
-        return self.operator
+    def print_tree(self, indent = 0):
+        print(' ' * indent + "└── " + self.operator)
+        for operand in self.operands:
+            operand.print_tree(indent + 4)
 
 class Function(Expr):
     def __init__(self, name, stack_level = 0):
@@ -75,8 +77,10 @@ class Function(Expr):
         self.operands = []
         self.innate_precedence = 4;
 
-    def __str__(self):
-        return self.name
+    def print_tree(self, indent = 0):
+        print(' ' * indent + "└── " + self.name)
+        for operand in self.operands:
+            operand.print_tree(indent + 4)
 
 # class Derivative(Expr):
 

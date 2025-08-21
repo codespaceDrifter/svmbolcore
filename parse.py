@@ -90,33 +90,59 @@ def parse_expression(expression: str, variables: list[str], functions: list[str]
     return expression_list
 
 def create_AST (expression_list: list[symbol.Expr]):
+
+
     prescedence_ordering = set()
     for expr in expression_list:
         if expr.is_leaf() == False:
-            prescedence_ordering.add(expr)
+            prescedence_ordering.add(expr.get_precedence())
 
     sorted_ordering = sorted(prescedence_ordering, reverse = True)
 
     for cur_prescedence in sorted_ordering:
+
+
         # start with all the left associatives and then do the right
         i = 0
         while i < len(expression_list):
+
+
             cur_expr = expression_list[i]
-            if cur_expr.is_leaf() == False and cur_expr.prescedence == cur_prescedence and cur_expr.left_associative == True:
-                if cur_expr.type == 'unaryop':
-                    cur_expr.operand = expression_list[i+1]
-                    del expression_list[i+1]
-                    i += 1
+            if cur_expr.is_leaf() == False and cur_expr.get_precedence() == cur_prescedence and cur_expr.left_associative == True:
                 if cur_expr.type == 'binaryop':
-                    cur_expr.left_operand = expression_list[i-1]
-                    cur_expr.right_operand = expression_list[i+1]
-                    del expression_list[i-1]
+
+                    cur_expr.operands.append(expression_list[i-1])
+                    cur_expr.operands.append(expression_list[i+1])
+                    # delete high index to low index to not mess up indexes
                     del expression_list[i+1]
-                    i += 1
+                    del expression_list[i-1]
+                    i -= 1
+
                 if cur_expr.type == 'function':
                     function_stack_level = cur_expr.stack_level
-                    i += 1
-                    while expression_list[i].is_leaf() == True or expression_list[i].stack_level > function_stack_level:
-                        cur_expr.operands.append(expression_list[i])
-                        del expression_list[i]
+                    while expression_list[i+1].is_leaf() == True or expression_list[i+1].stack_level > function_stack_level:
+                        cur_expr.operands.append(expression_list[i+1])
+                        del expression_list[i+1]
 
+            i += 1
+
+        i = len(expression_list) - 1
+
+        while i >= 0:
+
+
+            cur_expr = expression_list[i]
+            if cur_expr.is_leaf() == False and cur_expr.get_precedence() == cur_prescedence and cur_expr.left_associative == False:
+                if cur_expr.type == 'unaryop':
+                    cur_expr.operands.append(expression_list[i+1])
+                    del expression_list[i+1]
+                if cur_expr.type == 'binaryop':
+                    cur_expr.operands.append(expression_list[i-1])
+                    cur_expr.operands.append(expression_list[i+1])
+                    del expression_list[i+1]
+                    del expression_list[i-1]
+                    i -= 1
+            i -= 1
+                
+
+    return expression_list
