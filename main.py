@@ -1,12 +1,10 @@
 import parse
 
-expression = "1 + x - 3 ^ 2 + abc"
+expression = "5*(a+b)^2+2*a^2+3"
 
-variables = ['x', 'abc']
+variables = ['a', 'b']
 
 expression_list = parse.parse_expression(expression, variables, [])
-
-print([str(expr) for expr in expression_list])
 
 new_list = parse.create_AST(expression_list)
 

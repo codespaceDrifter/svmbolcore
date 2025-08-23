@@ -57,8 +57,8 @@ def parse_expression(expression: str, variables: list[str], functions: list[str]
             expression_list.append(symbol.Number(number_str, stack_level))
 
             last_token_is_operator = False
-            # Don't increment i here since the while loop already advanced it
-            continue
+
+            i -= 1
 
         elif char.isalpha():
             start = i
@@ -79,6 +79,8 @@ def parse_expression(expression: str, variables: list[str], functions: list[str]
                 last_token_is_operator = True
             else:
                 raise ValueError(f"Unknown variable or function: {variable_str}")
+
+            i -= 1
         
         else:
             raise ValueError(f"Unknown character: {char}")
