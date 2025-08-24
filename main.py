@@ -1,6 +1,6 @@
 import parse
 
-expression = "5*(a+b)^2+2*a^2+3"
+expression = "3abab^2+3"
 
 variables = ['a', 'b']
 

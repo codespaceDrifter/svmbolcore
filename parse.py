@@ -62,9 +62,12 @@ def parse_expression(expression: str, variables: list[str], functions: list[str]
 
         elif char.isalpha():
             start = i
-            while i < expression_length and (expression[i].isalpha()):
+            while i < expression_length and (expression[i].isalpha())
                 i += 1
-            variable_str = expression[start:i]
+
+
+
+
             if variable_str in special_unary:
                 expression_list.append(symbol.UnaryOp(variable_str,stack_level))
                 last_token_is_operator = True
@@ -72,6 +75,9 @@ def parse_expression(expression: str, variables: list[str], functions: list[str]
                 expression_list.append(symbol.BinaryOp(variable_str,stack_level))
                 last_token_is_operator = True 
             elif variable_str in variables:
+                if last_token_is_operator == False:
+                    last_stack_level = expression_list[-1].stack_level
+                    expression_list.append(symbol.BinaryOp('*', last_stack_level))
                 expression_list.append(symbol.Variable(variable_str, stack_level))
                 last_token_is_operator = False
             elif variable_str in functions:
