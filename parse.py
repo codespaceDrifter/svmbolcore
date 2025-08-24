@@ -25,6 +25,9 @@ def parse_expression(expression: str, variables: list[str], functions: list[str]
     special_unary = ['sin','cos','tan']
     special_binary = ['log']
 
+    all_named = variables + functions + special_unary + special_binary
+    max_named_len = max(len(name) for name in all_named) 
+
     # if last token is operand, the next + or - is binary
     last_token_is_operator = False
 
@@ -62,29 +65,34 @@ def parse_expression(expression: str, variables: list[str], functions: list[str]
 
         elif char.isalpha():
             start = i
-            while i < expression_length and (expression[i].isalpha())
-                i += 1
+            matched = None
+            for length in range (max_named_len, 0, -1):
+                end = min (start + length, expression_length)
+                candidate = expression[start:end]
+                if candidate in all_named:
+                    matched = candidate
+                    i = end
+                    break
 
+            assert matched != None
 
-
-
-            if variable_str in special_unary:
-                expression_list.append(symbol.UnaryOp(variable_str,stack_level))
+            if matched in special_unary:
+                expression_list.append(symbol.UnaryOp(matched,stack_level))
                 last_token_is_operator = True
-            if variable_str in special_binary:
-                expression_list.append(symbol.BinaryOp(variable_str,stack_level))
+            if matched in special_binary:
+                expression_list.append(symbol.BinaryOp(matched,stack_level))
                 last_token_is_operator = True 
-            elif variable_str in variables:
+            elif matched in variables:
                 if last_token_is_operator == False:
                     last_stack_level = expression_list[-1].stack_level
                     expression_list.append(symbol.BinaryOp('*', last_stack_level))
-                expression_list.append(symbol.Variable(variable_str, stack_level))
+                expression_list.append(symbol.Variable(matched, stack_level))
                 last_token_is_operator = False
-            elif variable_str in functions:
-                expression_list.append(symbol.Function(variable_str, stack_level))
+            elif matched in functions:
+                expression_list.append(symbol.Function(matched, stack_level))
                 last_token_is_operator = True
             else:
-                raise ValueError(f"Unknown variable or function: {variable_str}")
+                raise ValueError(f"Unknown variable or function: {matched}")
 
             i -= 1
         

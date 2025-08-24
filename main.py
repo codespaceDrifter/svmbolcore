@@ -1,6 +1,6 @@
 import parse
 
-expression = "3abab^2+3"
+expression = "3abab"
 
 variables = ['a', 'b']
 
