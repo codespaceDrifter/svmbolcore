@@ -1,4 +1,9 @@
-import symbol
+
+# THIS FILE IS NOW REDUNDANT
+
+
+
+from src import symbol
 
 '''
 write out all * explicitly, continuous letters will be the name of a single variable
@@ -74,6 +79,7 @@ def parse_expression(expression: str, variables: list[str], functions: list[str]
                     i = end
                     break
 
+
             assert matched != None
 
             if matched in special_unary:
@@ -122,7 +128,6 @@ def create_AST (expression_list: list[symbol.Expr]):
         i = 0
         while i < len(expression_list):
 
-
             cur_expr = expression_list[i]
             if cur_expr.is_leaf() == False and cur_expr.get_precedence() == cur_prescedence and cur_expr.left_associative == True:
                 if cur_expr.type == 'binaryop':
@@ -146,7 +151,6 @@ def create_AST (expression_list: list[symbol.Expr]):
 
         while i >= 0:
 
-
             cur_expr = expression_list[i]
             if cur_expr.is_leaf() == False and cur_expr.get_precedence() == cur_prescedence and cur_expr.left_associative == False:
                 if cur_expr.type == 'unaryop':
@@ -159,6 +163,5 @@ def create_AST (expression_list: list[symbol.Expr]):
                     del expression_list[i-1]
                     i -= 1
             i -= 1
-                
 
     return expression_list

@@ -1,12 +1,7 @@
-import parse
+from src.symbol import *
 
-expression = "3abab"
+a = Variable('a')
+b = Variable('b')
+result =  2 * (a+b)
 
-variables = ['a', 'b']
-
-expression_list = parse.parse_expression(expression, variables, [])
-
-new_list = parse.create_AST(expression_list)
-
-new_list[0].print_tree()
-
+result.print_tree()
