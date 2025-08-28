@@ -1,7 +1,14 @@
 from src.symbol import *
 
-a = Variable('a')
-b = Variable('b')
-result =  2 * (a+b)
+'''
+x = Variable('x')
+z = x**2 + 2*x**2 + x + 5*x + 3+4
+z.print_tree()
+'''
 
-result.print_tree()
+a = Number(4) + Number(5)
+a.print_tree()
+a = a._apply_local_rules()
+a.print_tree()
+
+
