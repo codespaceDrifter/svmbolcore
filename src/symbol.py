@@ -1,7 +1,5 @@
 # only implemented arithmatic local rules for now
 
-
-
 import math
 
 def _ensure_expr(value):
@@ -116,6 +114,10 @@ class Expr:
             return (self.operator == other.operator and 
                     self.operands[0].is_same(other.operands[0]) and 
                     self.operands[1].is_same(other.operands[1]))
+    
+    def _apply_local_rules(self):
+        return self
+    
 
 
 

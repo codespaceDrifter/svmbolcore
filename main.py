@@ -1,14 +1,22 @@
 from src.symbol import *
+from src.simplify import *
+
+# TODO: current goal: single Monomial simplification
+
+x = Variable('x')
+y = Variable('y')
+exp = x**2 * 3 * x + y**3 * y
+exp.print_tree()
+
+exp = simplify_tree(exp)
+exp.print_tree()
 
 '''
 x = Variable('x')
-z = x**2 + 2*x**2 + x + 5*x + 3+4
-z.print_tree()
+y = Variable('y')
+a = x + y
+b = a * 2
+c = a * 3
+d = b + c
+d.print_tree()
 '''
-
-a = Number(4) + Number(5)
-a.print_tree()
-a = a._apply_local_rules()
-a.print_tree()
-
-
