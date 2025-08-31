@@ -12,11 +12,22 @@ class Expr:
     type: str
     name: str
     operands: list["Expr"]
-
+    laters: list["Expr"]
 
     def is_leaf(self):
         return isinstance(self, Number) or isinstance(self, Variable)
 
+    def replace_self(self, new):
+        for later in self.laters:
+            for i, operand in enumerate(later.operands):
+                if operand is self:
+                    later.operands[i] = new
+
+    def print_tree(self, indent = 0):
+        print(' ' * indent + "└── " + str(self))
+        if not self.is_leaf():
+            for operand in self.operands:
+                operand.print_tree(indent + 4)
 
     # arithmatic unary
     def __neg__(self):
@@ -118,35 +129,35 @@ class Expr:
     def _apply_local_rules(self):
         return self
     
-
-
-
 class Number(Expr):
     def __init__(self, value):
         self.type = 'number'
         assert isinstance(value,(int,float))
         self.value = float(value)
-    
-    
-    def print_tree(self, indent = 0):
-        print(' ' * indent + "└── " + str(self.value))
+        self.laters = []
 
+    def __str__(self):
+        return str(self.value)
+    
 class Boolean(Expr):
     def __init__(self, value):
         self.type = 'boolean'
         assert value in (True,False)
         self.value = value
+        self.laters = []
 
-    def print_tree(self, indent = 0):
-        print(' ' * indent + "└── " + str(self.value))
+    def __str__(self):
+        return str(self.value)
 
 class Variable(Expr):
     def __init__(self, name):
         self.type = 'variable'
         self.name = name
+        self.laters = []
     
-    def print_tree(self, indent = 0):
-        print(' ' * indent + "└── " + self.name)
+    def __str__(self):
+        return str(self.name)
+
 
 class UnaryOp(Expr):
     def __init__(self, operator: str, operand_A: Expr):
@@ -154,6 +165,8 @@ class UnaryOp(Expr):
         assert operator in {'+','-','sin','cos','tan', '~'}
         self.operator = operator
         self.operands = [operand_A]
+        operand_A.laters.append(self)
+        self.laters = []
 
     def _apply_local_rules(self):
         operand = self.operands[0]
@@ -165,10 +178,9 @@ class UnaryOp(Expr):
         elif self.operator == 'cos' and operand.is_number() : return Number(math.cos(operand.value))
         elif self.operator == 'tan' and operand.is_number() : return Number(math.tan(operand.value))
 
-    def print_tree(self, indent = 0):
-        print(' ' * indent + "└── " + self.operator)
-        for operand in self.operands:
-            operand.print_tree(indent + 4)
+    def __str__(self):
+        return self.operator
+
 
 class BinaryOp(Expr):
     def __init__(self, operator, operand_A: Expr, operand_B: Expr):
@@ -178,6 +190,9 @@ class BinaryOp(Expr):
                             '&','|','^'}                  #logical
         self.operator = operator
         self.operands = [operand_A,operand_B]
+        operand_A.laters.append(self)
+        operand_B.laters.append(self)
+        self.laters = []
 
     def _apply_local_rules(self):
         left, right = self.operands[0], self.operands[1]
@@ -211,10 +226,8 @@ class BinaryOp(Expr):
 
         return self
 
-    def print_tree(self, indent = 0):
-        print(' ' * indent + "└── " + self.operator)
-        for operand in self.operands:
-            operand.print_tree(indent + 4)
+    def __str__(self):
+        return self.operator
 
 class If(Expr):
     def __init__(self, condition: Expr, if_branch: Expr, else_branch: Expr):
@@ -222,6 +235,10 @@ class If(Expr):
         self.condition = condition
         self.if_branch = if_branch
         self.else_branch = else_branch
+        condition.laters.append(self)
+        if_branch.laters.append(self)
+        else_branch.laters.append(self)
+        self.laters = []
 
     def print_tree(self, indent = 0):
         print(' ' * indent + "└── " + self.type)

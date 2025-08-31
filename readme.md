@@ -1,7 +1,9 @@
 math library that symbolically solve algebra
 
 to do:
-topo sort then start from leaves do apply local rules
+
+HANDLE INSTANCES/ IDS. each expr should only forward trace to ONE thing. this is what allows chaining. 
+
 ** rule expansion
 * meet + / - expansion
 canical form
