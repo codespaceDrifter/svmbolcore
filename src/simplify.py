@@ -3,14 +3,9 @@ from .symbol import *
 
 def simplify_tree (expr):
     expr = topo_apply(expr)
-    # tree to canonical term list
-
-    # canonical term list addition simplify
-
-    # canonical term list to tree
+    topo_id_list, get_next = topo_instance_graph(Expr)
     return expr
 
-# TODO: have a topo sort method that labels instances and returns a dict of their connections
 
 # topo sorts the tree and assigns an id to each unique instance 
 # returns a list of the sorted (expr, int) 
@@ -53,28 +48,29 @@ def topo_instance_graph(expr, debug = False):
 
     return topo_id_list, get_next 
 
-
 def topo_apply(expr):
     if not expr.is_leaf():
         for i, operand in enumerate(expr.operands):
             expr.operands[i] = topo_apply(operand)
     return expr._apply_local_rules()
 
-
-def is_factor(Expr):
-    pass
-
-
+# simplify a single multiplication chain: 3*a*b
+# simplify a multiplication chain with powers i.e. 3*a^2*b^3
+# simplify a chain with other interrupts i.e. 3+a^2*b
 class Monomial(Expr):
-    def __init__(self,Expr):
-
-
+    def __init__(self):
         self.coefficient = 1
         # base and exponent
-        self.factors: list[tuple[Expr,Expr]] = []
+        self.factors: Dict[Expr: Expr]= {} 
+    
+    def absorb(self, expr):
+        if isinstance(expr,Number):
+            self.coefficient *= Expr
+        if isinstance(expr,Variable):
+            self.factors[expr] = self.factors[expr] + 1
+        if isinstance(expr,BinaryOp) and expr.operator=='*':
+            self.factors[expr.operands[0]] = self.factors[expr.operands[0]] + 
 
-    def absorb(self, Expr):
-        pass
         
 
 
