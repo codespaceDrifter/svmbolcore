@@ -1,27 +1,14 @@
 # only implemented arithmatic local rules for now
 
-import math
+# TODO: use "variadic operators" with a variable number of operands. plus and mulitplication only. no more minuses and divisions
+# TODO: allow forward and backward tracking
 
-def _ensure_expr(value):
-    if isinstance(value,(int, float)):
-        return Number(value)
-    assert isinstance(value,Expr)
-    return value
+import math
+from typing import Tuple
 
 class Expr:
-    type: str
-    name: str
-    operands: list["Expr"]
-    laters: list["Expr"]
-
     def is_leaf(self):
         return isinstance(self, Number) or isinstance(self, Variable)
-
-    def replace_self(self, new):
-        for later in self.laters:
-            for i, operand in enumerate(later.operands):
-                if operand is self:
-                    later.operands[i] = new
 
     def print_tree(self, indent = 0):
         print(' ' * indent + "└── " + str(self))
@@ -31,74 +18,74 @@ class Expr:
 
     # arithmatic unary
     def __neg__(self):
-        return UnaryOp('-', self)
+        return Mul(-1, self)
     
     def __pos__(self):
-        return UnaryOp('+', self)
-
-    # logical unary
-    def __invert__(self):
-        return UnaryOp('~', self)
+        return Mul(1, self)
 
     # arithmatic binary
     def __add__ (self, other):
-        return BinaryOp('+',  self, _ensure_expr(other))
-    
+        return Add(self, other)   
+
     def __radd__ (self,other):
-        return BinaryOp('+', _ensure_expr(other), self)
+        return Add(other, self)
 
     def __sub__(self, other):
-        return BinaryOp('-', self, _ensure_expr(other))
-    
+        return Add(self,Mul(-1,other))
+
     def __rsub__(self, other):
-        return BinaryOp('-', _ensure_expr(other), self)
+        return Add(other,Mul(-1,self))
     
     def __mul__(self, other):
-        return BinaryOp('*', self, _ensure_expr(other))
+        return Mul(self,other)
     
     def __rmul__(self, other):
-        return BinaryOp('*', _ensure_expr(other), self)
-    
+        return Mul(other,self)   
+
     def __truediv__(self, other):
-        return BinaryOp('/', self, _ensure_expr(other))
+        return Mul(self,Pow(other,-1))
     
     def __rtruediv__(self, other):
-        return BinaryOp('/', _ensure_expr(other), self)
+        return Mul(other,Pow(self,-1))
 
     def __pow__(self, other):  
-        return BinaryOp('**', self, _ensure_expr(other))
+        return Pow(self,other)
 
     def __rpow__(self, other):
-        return BinaryOp('**', _ensure_expr(other), self)
+        return Pow(other,self)
 
     # comparison binary
     def __eq__(self,other):
-        return BinaryOp('==',self,_ensure_expr(other))
+        return Compare('==',self,other)
 
     def __ne__(self,other):
-        return BinaryOp('!=',self,_ensure_expr(other))
+        return Compare('!=',self,other)
 
     def __lt__(self,other):
-        return BinaryOp('<',self,_ensure_expr(other))
+        return Compare('<',self,other)
 
     def __le__(self,other):
-        return BinaryOp('<=',self,_ensure_expr(other))
+        return Compare('<=',self,other)
 
     def __gt__(self,other):
-        return BinaryOp('>',self,_ensure_expr(other))
+        return Compare('>',self,other)
 
     def __ge__(self,other):
-        return BinaryOp('>=',self,_ensure_expr(other))
+        return Compare('>=',self,other)
 
-    # logical binary
+    # logical unary
+    def __invert__(self):
+        return Logic('~', self)
+
+    # logical variadic
     def __and__(self,other):
-        return BinaryOp('&',self,_ensure_expr(other))
+        return Logic('&',self,other)
 
     def __or__(self,other):
-        return BinaryOp('|',self,_ensure_expr(other))
+        return Logic('|',self,other)
 
     def __xor__(self,other):
-        return BinaryOp('^',self,_ensure_expr(other))
+        return Logic('^',self,other)
 
     def is_number(self):
         return isinstance(self,Number)
@@ -109,90 +96,126 @@ class Expr:
     def is_one(self):
         return isinstance(self, Number) and abs(self.value - 1.0) < 1e-12
 
-
     # check if two exprs are structually and valuely identical for cancellation
-    def is_same(self, other):
-        if type(self) != type(other):
-            return False
-        if isinstance(self, Number):
-            return abs(self.value - other.value) < 1e-12
-        elif isinstance(self, Variable):
-            return self.name == other.name  
-        elif isinstance(self, UnaryOp):
-            return (self.operator == other.operator and
-                    self.operands[0].is_same(other.operands[0]))
-        elif isinstance(self, BinaryOp):
-            return (self.operator == other.operator and 
-                    self.operands[0].is_same(other.operands[0]) and 
-                    self.operands[1].is_same(other.operands[1]))
-    
-    def _apply_local_rules(self):
-        return self
+
+def _ensure_expr(value):
+    if isinstance(value,(int, float)):
+        return Number(value)
+    assert isinstance(value,Expr)
+    return value
+
+def _as_base_exp(expr):
+    assert (isinstance(expr,Expr))
+    if isinstance(e,Pow):
+        return e.operands[0], e.operands[1]
+    return expr, 1
+
+# does not deal with logical ops for now
+def canon_key(expr):
+    if isinstance(expr, Number):
+        return ('NUM', str(expr))
+    elif isinstance(expr, Variable):
+        return ('VAR', str(expr))
+    elif isinstance(expr, Add):
+        return ('ADD', tuple(sorted(canon_key(o) for o in expr.operands)))
+    elif isinstance(expr, Mul):
+        return ('MUL', tuple(sorted(canon_key(o) for o in expr.operands)))
+    elif isinstance(expr, Pow):
+        return ('POW', tuple(canon_key(o) for o in expr.operands))
+
     
 class Number(Expr):
     def __init__(self, value):
-        self.type = 'number'
         assert isinstance(value,(int,float))
         self.value = float(value)
-        self.laters = []
 
     def __str__(self):
-        return str(self.value)
+        return f"{self.value:.{12}g}"
     
 class Boolean(Expr):
     def __init__(self, value):
-        self.type = 'boolean'
+        super().__init__()
         assert value in (True,False)
         self.value = value
-        self.laters = []
 
     def __str__(self):
         return str(self.value)
 
 class Variable(Expr):
     def __init__(self, name):
-        self.type = 'variable'
         self.name = name
-        self.laters = []
     
     def __str__(self):
         return str(self.name)
 
+class Add (Expr):
+    def __init__(self, *args):
+        ops = []
+        for arg in args:
+            arg = _ensure_expr(arg)
+            if isinstance(arg, Add):
+                ops.extend(arg.operands)
+            else:
+                ops.append(arg)
+        ops.sort(key = canon_key)
+        self.operands = tuple(ops)
 
-class UnaryOp(Expr):
-    def __init__(self, operator: str, operand_A: Expr):
-        self.type = 'unaryop'
-        assert operator in {'+','-','sin','cos','tan', '~'}
+    def __str__(self):
+        return '+'
+        
+    # simplify needs both local rules (i.e. delete 0) and term based simplification
+    def simplify(self):
+        pass
+
+class Mul (Expr):
+    def __init__(self, *args):
+        ops = []
+        for arg in args:
+            arg = _ensure_expr(arg)
+            if isinstance(arg, Mul):
+                ops.extend(arg.operands)
+            else:
+                ops.append(arg)
+        ops.sort(key = canon_key)
+        self.operands = tuple(ops)
+
+    def __str__(self):
+        return '*'
+    
+    def simplify(self):
+        pass
+
+class Pow (Expr):
+    def __init__ (self, base, exponent):
+        self.base = _ensure_expr(base)
+        self.exponent = _ensure_expr(exponent)
+        self.operands = (self.base, self.exponent)
+
+    def __str__(self):
+        return '**'
+
+class Compare(Expr):
+    def __init__(self, operator, operand_A: Expr, operand_B: Expr):
+        assert operator in {'==','!=','<','<=','>','>='} 
         self.operator = operator
-        self.operands = [operand_A]
-        operand_A.laters.append(self)
-        self.laters = []
-
-    def _apply_local_rules(self):
-        operand = self.operands[0]
-        if self.operator == '+': return operand
-        elif self.operator == '-':
-            if operand.is_number(): return Number(-operand.value)
-            elif isinstance(operand,UnaryOp) and operand.operator == '-': return operand.operands[0]
-        elif self.operator == 'sin' and operand.is_number() : return Number(math.sin(operand.value))
-        elif self.operator == 'cos' and operand.is_number() : return Number(math.cos(operand.value))
-        elif self.operator == 'tan' and operand.is_number() : return Number(math.tan(operand.value))
+        self.operands = (_ensure_expr(operand_A),_ensure_expr(operand_B))
 
     def __str__(self):
         return self.operator
 
-
-class BinaryOp(Expr):
-    def __init__(self, operator, operand_A: Expr, operand_B: Expr):
-        self.type = 'binaryop'
-        assert operator in {'+','-','*','/','**','log',   #arithmatic
-                            '==','!=','<','<=','>','>=',  #conditional
-                            '&','|','^'}                  #logical
+class Logic(Expr):
+    def __init__(self, operator, *args):
+        assert operator in {'&','|','^'}                  
         self.operator = operator
-        self.operands = [operand_A,operand_B]
-        operand_A.laters.append(self)
-        operand_B.laters.append(self)
-        self.laters = []
+        # FIXME: this is wrong perhaps. need to extend things if its a logic of the same operator but fix later
+        ops = [_ensure_expr(arg) for arg in args]
+        ops.sort(key = canon_key)
+        self.operator = tuple(ops) 
+
+    def __str__(self):
+        return self.operator
+
+'''
 
     def _apply_local_rules(self):
         left, right = self.operands[0], self.operands[1]
@@ -225,12 +248,11 @@ class BinaryOp(Expr):
             elif right.is_one(): return left
 
         return self
-
-    def __str__(self):
-        return self.operator
+'''
 
 class If(Expr):
     def __init__(self, condition: Expr, if_branch: Expr, else_branch: Expr):
+        super().__init__()
         self.type = 'If'
         self.condition = condition
         self.if_branch = if_branch
@@ -238,7 +260,6 @@ class If(Expr):
         condition.laters.append(self)
         if_branch.laters.append(self)
         else_branch.laters.append(self)
-        self.laters = []
 
     def print_tree(self, indent = 0):
         print(' ' * indent + "└── " + self.type)

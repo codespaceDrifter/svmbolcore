@@ -1,18 +1,16 @@
 math library that symbolically solve algebra
+expressions are immutable and always sorted
+generate a tuple list that is able to be sorted
+use dicts to do mul simplification and then add simplifaction
+
+make my commits mean something dont just say drift
+maybe rename to svmbolcore or something
 
 to do:
 
-HANDLE INSTANCES/ IDS. each expr should only forward trace to ONE thing. this is what allows chaining. 
+sort and keygen
+multiplication simplification
+addition simplification
 
-** rule expansion
-* meet + / - expansion
-canical form
-equation solving
-calculus
-
-
-
-this summer JUST DO CPU. maybe gpu and switch phvsicsim to use this instead of pytorch when i have time.
-
-maybe rename to svmbolcore or something
+variadic add and mul. no minus or divide nodes
 

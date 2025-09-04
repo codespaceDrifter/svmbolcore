@@ -46,6 +46,13 @@ def topo_instance_graph(expr, debug = False):
         next_topo = id_to_topo[next_id]
         return next_topo,next_id 
 
+    # get the id of the next id, get it's two previous ids, and find the one that is not the caller
+    def get_binary_prev(id):
+        pass
+        
+
+
+
     return topo_id_list, get_next 
 
 def topo_apply(expr):
@@ -66,10 +73,20 @@ class Monomial(Expr):
     def absorb(self, expr):
         if isinstance(expr,Number):
             self.coefficient *= Expr
-        if isinstance(expr,Variable):
-            self.factors[expr] = self.factors[expr] + 1
-        if isinstance(expr,BinaryOp) and expr.operator=='*':
-            self.factors[expr.operands[0]] = self.factors[expr.operands[0]] + 
+        elif isinstance(expr,Variable):
+            if expr in self.factors:
+                self.factors[expr] = self.factors[expr] + 1
+            else:
+                self.factors[expr] = Number(1)
+        elif isinstance(expr,BinaryOp) and expr.operator=='**':
+            self.factors[expr.operands[0]] = self.factors[expr.operands[0]] + expr.operands[1]
+        elif isinstance(expr,BinaryOp) and expr.operator=='*':
+            pass
+
+
+    def chain_traverse(self, start_expr):
+        pass
+
 
         
 
