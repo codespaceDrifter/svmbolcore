@@ -17,86 +17,36 @@ class Expr:
                 operand.print_tree(indent + 4)
 
     # arithmatic unary
-    def __neg__(self):
-        return Mul(-1, self)
-    
-    def __pos__(self):
-        return Mul(1, self)
-
+    def __neg__(self): return Mul(-1, self)
+    def __pos__(self): return Mul(1, self)
     # arithmatic binary
-    def __add__ (self, other):
-        return Add(self, other)   
-
-    def __radd__ (self,other):
-        return Add(other, self)
-
-    def __sub__(self, other):
-        return Add(self,Mul(-1,other))
-
-    def __rsub__(self, other):
-        return Add(other,Mul(-1,self))
-    
-    def __mul__(self, other):
-        return Mul(self,other)
-    
-    def __rmul__(self, other):
-        return Mul(other,self)   
-
-    def __truediv__(self, other):
-        return Mul(self,Pow(other,-1))
-    
-    def __rtruediv__(self, other):
-        return Mul(other,Pow(self,-1))
-
-    def __pow__(self, other):  
-        return Pow(self,other)
-
-    def __rpow__(self, other):
-        return Pow(other,self)
-
+    def __add__ (self, other): return Add(self, other)   
+    def __radd__ (self,other): return Add(other, self)
+    def __sub__(self, other): return Add(self,Mul(-1,other))
+    def __rsub__(self, other): return Add(other,Mul(-1,self))
+    def __mul__(self, other): return Mul(self,other)
+    def __rmul__(self, other): return Mul(other,self)   
+    def __truediv__(self, other): return Mul(self,Pow(other,-1))
+    def __rtruediv__(self, other): return Mul(other,Pow(self,-1))
+    def __pow__(self, other):   return Pow(self,other)
+    def __rpow__(self, other): return Pow(other,self)
     # comparison binary
-    def __eq__(self,other):
-        return Compare('==',self,other)
-
-    def __ne__(self,other):
-        return Compare('!=',self,other)
-
-    def __lt__(self,other):
-        return Compare('<',self,other)
-
-    def __le__(self,other):
-        return Compare('<=',self,other)
-
-    def __gt__(self,other):
-        return Compare('>',self,other)
-
-    def __ge__(self,other):
-        return Compare('>=',self,other)
-
+    def __eq__(self,other): return Compare('==',self,other)
+    def __ne__(self,other): return Compare('!=',self,other)
+    def __lt__(self,other): return Compare('<',self,other)
+    def __le__(self,other): return Compare('<=',self,other)
+    def __gt__(self,other): return Compare('>',self,other)
+    def __ge__(self,other): return Compare('>=',self,other)
     # logical unary
-    def __invert__(self):
-        return Logic('~', self)
-
+    def __invert__(self): return Logic('~', self)
     # logical variadic
-    def __and__(self,other):
-        return Logic('&',self,other)
-
-    def __or__(self,other):
-        return Logic('|',self,other)
-
-    def __xor__(self,other):
-        return Logic('^',self,other)
-
-    def is_number(self):
-        return isinstance(self,Number)
-
-    def is_zero(self):
-        return isinstance(self, Number) and abs(self.value) < 1e-12
-    
-    def is_one(self):
-        return isinstance(self, Number) and abs(self.value - 1.0) < 1e-12
-
-    # check if two exprs are structually and valuely identical for cancellation
+    def __and__(self,other): return Logic('&',self,other)
+    def __or__(self,other): return Logic('|',self,other)
+    def __xor__(self,other): return Logic('^',self,other)
+    #helper functions
+    def is_number(self): return isinstance(self,Number)
+    def is_zero(self): return isinstance(self, Number) and abs(self.value) < 1e-12
+    def is_one(self): return isinstance(self, Number) and abs(self.value - 1.0) < 1e-12
 
 def _ensure_expr(value):
     if isinstance(value,(int, float)):
@@ -191,6 +141,9 @@ class Pow (Expr):
         self.exponent = _ensure_expr(exponent)
         self.operands = (self.base, self.exponent)
 
+    def local_rules(self):
+        pass
+
     def __str__(self):
         return '**'
 
@@ -221,7 +174,7 @@ class Logic(Expr):
         left, right = self.operands[0], self.operands[1]
         if self.operator == '+':
             if left.is_number() and right.is_number(): return Number(left.value + right.value)
-            elif left.is_zero(): return right
+            eli left.is_zero(): return right
             elif right.is_zero(): return left
         if self.operator=='-':
             if left.is_same(right): return Number(0)
