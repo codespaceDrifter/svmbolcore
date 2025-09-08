@@ -1,14 +1,9 @@
-# only implemented arithmatic local rules for now
-
-# TODO: use "variadic operators" with a variable number of operands. plus and mulitplication only. no more minuses and divisions
-# TODO: allow forward and backward tracking
+# Expr is immutable
 
 import math
 from typing import Tuple
 
 class Expr:
-    def is_leaf(self):
-        return isinstance(self, Number) or isinstance(self, Variable)
 
     def print_tree(self, indent = 0):
         print(' ' * indent + "└── " + str(self))
@@ -41,12 +36,68 @@ class Expr:
     def __invert__(self): return Logic('~', self)
     # logical variadic
     def __and__(self,other): return Logic('&',self,other)
-    def __or__(self,other): return Logic('|',self,other)
+    def __or__(selfbouteyecandy
+               ,other): return Logic('|',self,other)
     def __xor__(self,other): return Logic('^',self,other)
+
     #helper functions
+    def is_leaf(self): return isinstance(self, Number) or isinstance(self, Variable)
     def is_number(self): return isinstance(self,Number)
     def is_zero(self): return isinstance(self, Number) and abs(self.value) < 1e-12
     def is_one(self): return isinstance(self, Number) and abs(self.value - 1.0) < 1e-12
+    def _as_base_exp(self):
+        if isinstance(self,Pow):
+            return self.operands[0], e.operands[1]
+        return self, 1
+    #hash and comparison (same logic)
+    def __hash__(self): return hash(canon_key(self))
+    def __eq__(self, other):
+        if not isinstance(other,Expr):
+            return False
+        return canon_key(self) == canon_key(other)
+
+    # simlify
+    def _reconstruct(self, new_operands): 
+        return type(self)(*new_operands)
+
+    def local_simplify(self):
+        return self
+
+
+    def simplify(self):
+        if self.is_leaf():
+            return self
+        else:
+            new_operands = []
+            for operand in self.operands:
+                new_operand = operand.simplify()
+                if new_operand is not None:
+                    new_operands.append(new_operand)
+
+            new_self = self._reconstruct(new_operands)
+            return new_self.local_simplify()
+    def _reconstruct(self, new_operands): 
+        return type(self)(*new_operands)
+
+    def local_simplify(self):
+        print('what')
+        return self
+
+
+    def simplify(self):
+        if self.is_leaf():
+            return self
+        else:
+            new_operands = []
+            for operand in self.operands:
+                new_operand = operand.simplify()
+                if new_operand is not None:
+                    new_operands.append(new_operand)
+
+            new_self = self._reconstruct(new_operands)
+            return new_self.local_simplify()
+
+
 
 def _ensure_expr(value):
     if isinstance(value,(int, float)):
@@ -54,11 +105,6 @@ def _ensure_expr(value):
     assert isinstance(value,Expr)
     return value
 
-def _as_base_exp(expr):
-    assert (isinstance(expr,Expr))
-    if isinstance(e,Pow):
-        return e.operands[0], e.operands[1]
-    return expr, 1
 
 # does not deal with logical ops for now
 def canon_key(expr):
@@ -110,6 +156,7 @@ class Add (Expr):
         ops.sort(key = canon_key)
         self.operands = tuple(ops)
 
+
     def __str__(self):
         return '+'
         
@@ -132,8 +179,6 @@ class Mul (Expr):
     def __str__(self):
         return '*'
     
-    def simplify(self):
-        pass
 
 class Pow (Expr):
     def __init__ (self, base, exponent):

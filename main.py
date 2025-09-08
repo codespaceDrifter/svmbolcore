@@ -9,3 +9,5 @@ z = Variable('z')
 exp = x + y + x*y*z**2 
 exp.print_tree()
 
+new_exp = exp.simplify()
+new_exp.print_tree()
