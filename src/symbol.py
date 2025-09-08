@@ -36,8 +36,7 @@ class Expr:
     def __invert__(self): return Logic('~', self)
     # logical variadic
     def __and__(self,other): return Logic('&',self,other)
-    def __or__(selfbouteyecandy
-               ,other): return Logic('|',self,other)
+    def __or__(self,other): return Logic('|',self,other)
     def __xor__(self,other): return Logic('^',self,other)
 
     #helper functions
@@ -47,7 +46,7 @@ class Expr:
     def is_one(self): return isinstance(self, Number) and abs(self.value - 1.0) < 1e-12
     def _as_base_exp(self):
         if isinstance(self,Pow):
-            return self.operands[0], e.operands[1]
+            return self.operands[0], self.operands[1]
         return self, 1
     #hash and comparison (same logic)
     def __hash__(self): return hash(canon_key(self))
@@ -63,7 +62,6 @@ class Expr:
     def local_simplify(self):
         return self
 
-
     def simplify(self):
         if self.is_leaf():
             return self
@@ -76,26 +74,7 @@ class Expr:
 
             new_self = self._reconstruct(new_operands)
             return new_self.local_simplify()
-    def _reconstruct(self, new_operands): 
-        return type(self)(*new_operands)
 
-    def local_simplify(self):
-        print('what')
-        return self
-
-
-    def simplify(self):
-        if self.is_leaf():
-            return self
-        else:
-            new_operands = []
-            for operand in self.operands:
-                new_operand = operand.simplify()
-                if new_operand is not None:
-                    new_operands.append(new_operand)
-
-            new_self = self._reconstruct(new_operands)
-            return new_self.local_simplify()
 
 
 
@@ -161,24 +140,80 @@ class Add (Expr):
         return '+'
         
     # simplify needs both local rules (i.e. delete 0) and term based simplification
-    def simplify(self):
-        pass
+
+#TODO: special rules: if there is 0, everything is 0, if there is 1, delete it. 
+#TODO: local rules: multiply numbers directly. combine exponents of same base
 
 class Mul (Expr):
-    def __init__(self, *args):
+
+    def __new__ (cls, *args):
+        coefficient = 1
         ops = []
-        for arg in args:
-            arg = _ensure_expr(arg)
-            if isinstance(arg, Mul):
-                ops.extend(arg.operands)
+        def merge (expr):
+            nonlocal coefficient
+            nonlocal ops
+            expr = _ensure_expr(expr)
+            #NOTE:multiply numbers directly.
+            if isinstance(expr, Number):
+                coefficient *= expr.value
             else:
-                ops.append(arg)
+                ops.append(expr)
+
+        for arg in args:
+            if isinstance(arg, Mul):
+                for operand in arg.operands:
+                    merge(operand)
+            else:
+                merge(arg)
+
+        coefficient = Number(coefficient)
+        #NOTE: if coefficient is zero return zero
+        if coefficient.is_zero():
+            return Number(0)
+        #NOTE: if everything is coefficient(no ops) just return a number
+        if len(ops) == 0:
+            return coefficient
+        #NOTE: if coefficient is 1 delete it
+        if not coefficient.is_one():
+            ops.append(coefficient)
+
         ops.sort(key = canon_key)
-        self.operands = tuple(ops)
+        mul =  object.__new__(cls)
+        mul.operands = tuple(ops)
+        return mul 
+
 
     def __str__(self):
         return '*'
+
+    def local_simplify(self):
+        #NOTE: combine operands
+        base_to_exp = {}
+        for operand in self.operands:
+            base, exp = operand._as_base_exp()
+            if base in base_to_exp:
+                base_to_exp[base] = base_to_exp[base] + exp
+            else:
+                base_to_exp[base] = exp
+
+        # simplify terms
+        terms = []
+        for base, exp in base_to_exp.items():
+            terms.append(base**exp)
+        
+        simplified_terms = []
+        for term in terms:
+            simplified_term = term.simplify()
+            simplified_terms.append(simplified_term)
+
+        return Mul (*simplified_terms)
+
+
+
+
     
+
+#TODO: special rules: like 0^exp and 1^exp and base^0 and base^1
 
 class Pow (Expr):
     def __init__ (self, base, exponent):
