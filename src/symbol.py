@@ -44,10 +44,26 @@ class Expr:
     def is_number(self): return isinstance(self,Number)
     def is_zero(self): return isinstance(self, Number) and abs(self.value) < 1e-12
     def is_one(self): return isinstance(self, Number) and abs(self.value - 1.0) < 1e-12
+
+    # assume self is simplified for these _as_sth functions
+    def _as_coef_literal(self):
+       if isinstance(self, Mul):
+            coefficient = Number(1) 
+            ops = []
+            for operand in self.operands:
+                if isinstance(operand, Number):
+                    # assume only ONE number exists in operands. assume already simplified
+                    coefficient = operand
+                else:
+                    ops.append(operand)
+            return coefficient, Mul(*ops)
+        return Number(1), self
+
     def _as_base_exp(self):
         if isinstance(self,Pow):
             return self.operands[0], self.operands[1]
-        return self, 1
+        return self, Number(1)
+
     #hash and comparison (same logic)
     def __hash__(self): return hash(canon_key(self))
     def __eq__(self, other):
@@ -55,10 +71,7 @@ class Expr:
             return False
         return canon_key(self) == canon_key(other)
 
-    # simlify
-    def _reconstruct(self, new_operands): 
-        return type(self)(*new_operands)
-
+    # simplify
     def local_simplify(self):
         return self
 
@@ -72,11 +85,8 @@ class Expr:
                 if new_operand is not None:
                     new_operands.append(new_operand)
 
-            new_self = self._reconstruct(new_operands)
+            new_self = type(self)(*new_operands)
             return new_self.local_simplify()
-
-
-
 
 def _ensure_expr(value):
     if isinstance(value,(int, float)):
@@ -86,17 +96,13 @@ def _ensure_expr(value):
 
 
 # does not deal with logical ops for now
+# communicative ops' operands are sorted non communicative ops' operand are kept in order
 def canon_key(expr):
-    if isinstance(expr, Number):
-        return ('NUM', str(expr))
-    elif isinstance(expr, Variable):
-        return ('VAR', str(expr))
-    elif isinstance(expr, Add):
-        return ('ADD', tuple(sorted(canon_key(o) for o in expr.operands)))
-    elif isinstance(expr, Mul):
-        return ('MUL', tuple(sorted(canon_key(o) for o in expr.operands)))
-    elif isinstance(expr, Pow):
-        return ('POW', tuple(canon_key(o) for o in expr.operands))
+    if isinstance(expr, Number): return ('NUM', str(expr))
+    elif isinstance(expr, Variable): return ('VAR', str(expr))
+    elif isinstance(expr, Add): return ('ADD', tuple(sorted(canon_key(o) for o in expr.operands)))
+    elif isinstance(expr, Mul): return ('MUL', tuple(sorted(canon_key(o) for o in expr.operands)))
+    elif isinstance(expr, Pow): return ('POW', tuple(canon_key(o) for o in expr.operands))
 
     
 class Number(Expr):
@@ -123,29 +129,71 @@ class Variable(Expr):
     def __str__(self):
         return str(self.name)
 
+# local rules: add Numbers. combine same MONOMIAL terms and add their COEFFICIENTS
+# special rules. if total is 0 return 0. 
 class Add (Expr):
-    def __init__(self, *args):
+    def __new__(cls, *args):
+        constant = 0
         ops = []
-        for arg in args:
-            arg = _ensure_expr(arg)
-            if isinstance(arg, Add):
-                ops.extend(arg.operands)
+        def merge (expr):
+            nonlocal constant
+            nonlocal ops
+            expr = _ensure_expr(expr)
+            # add constants directly
+            if isinstance(expr,Number):
+                constant += expr.value
             else:
-                ops.append(arg)
+                ops.append(expr)
+        for arg in args:
+            if isinstance(arg, Add):
+                for operand in arg.operands:
+                    merge(operand)
+            else:
+                merge(arg)
+        constant = Number(constant)
+        # if everything is constant(no ops) just return a number
+        if len(ops) == 0:
+            return constant
+        # if constant is not zero add it to ops
+        if not constant.is_zero():
+            ops.append(constant)
+        # if it's just a unary op directly return
+        if len(ops) == 1:
+            return ops[0]
         ops.sort(key = canon_key)
-        self.operands = tuple(ops)
+        add = object.__new__(cls)
+        add.operands = tuple(ops)
+        return add
+
+    def local_simplify(self):
+        literal_to_coefs = {}
+        for operand in self.operands:
+            coef, literal = operand._as_coef_literal()
+
+            if literal in literal_to_coefs:
+                literal_to_coefs[literal] = literal_to_coefs[literal] + coef
+            else:
+                literal_to_coefs[literal] = coef
+
+        terms = []
+        for literal, coef in literal_to_coefs.items():
+            terms.append(coef * literal)
+
+        simplified_terms = []
+        for term in terms:
+            simplified_term = term.simplify()
+            simplified_terms.append(simplified_term)
+
+        return Add (*simplified_terms)
 
 
     def __str__(self):
         return '+'
         
-    # simplify needs both local rules (i.e. delete 0) and term based simplification
 
-#TODO: special rules: if there is 0, everything is 0, if there is 1, delete it. 
-#TODO: local rules: multiply numbers directly. combine exponents of same base
-
+# local rules: multiply Numbers. combine same BASES add their EXPONENTS
+# special rules: if coefficient is 0, return 0. if coefficient is 1, delete coefficient.
 class Mul (Expr):
-
     def __new__ (cls, *args):
         coefficient = 1
         ops = []
@@ -153,76 +201,92 @@ class Mul (Expr):
             nonlocal coefficient
             nonlocal ops
             expr = _ensure_expr(expr)
-            #NOTE:multiply numbers directly.
+            #multiply numbers directly.
             if isinstance(expr, Number):
                 coefficient *= expr.value
             else:
                 ops.append(expr)
-
         for arg in args:
             if isinstance(arg, Mul):
                 for operand in arg.operands:
                     merge(operand)
             else:
                 merge(arg)
-
         coefficient = Number(coefficient)
-        #NOTE: if coefficient is zero return zero
+        # if coefficient is 0 return 0
         if coefficient.is_zero():
             return Number(0)
-        #NOTE: if everything is coefficient(no ops) just return a number
-        if len(ops) == 0:
-            return coefficient
-        #NOTE: if coefficient is 1 delete it
+        # if coefficient is 1 delete coefficient
         if not coefficient.is_one():
             ops.append(coefficient)
-
+        # if only one factor just return that
+        if len(ops) == 1:
+            return ops[0]
         ops.sort(key = canon_key)
         mul =  object.__new__(cls)
         mul.operands = tuple(ops)
         return mul 
 
-
     def __str__(self):
         return '*'
 
     def local_simplify(self):
-        #NOTE: combine operands
-        base_to_exp = {}
+        # combine operands
+        base_to_exps = {}
         for operand in self.operands:
             base, exp = operand._as_base_exp()
-            if base in base_to_exp:
-                base_to_exp[base] = base_to_exp[base] + exp
+            if base in base_to_exps:
+                base_to_exps[base] = base_to_exps[base] + exp
             else:
-                base_to_exp[base] = exp
+                base_to_exps[base] = exp
 
         # simplify terms
-        terms = []
-        for base, exp in base_to_exp.items():
-            terms.append(base**exp)
+        factors = []
+        for base, exp in base_to_exps.items():
+            factors.append(base**exp)
         
-        simplified_terms = []
-        for term in terms:
-            simplified_term = term.simplify()
-            simplified_terms.append(simplified_term)
+        simplified_factors = []
+        for factor in factors:
+            simplified_factor = factor.simplify()
+            simplified_factors.append(simplified_factor)
 
-        return Mul (*simplified_terms)
-
-
-
+        return Mul (*simplified_factors)
 
     
 
 #TODO: special rules: like 0^exp and 1^exp and base^0 and base^1
 
 class Pow (Expr):
-    def __init__ (self, base, exponent):
-        self.base = _ensure_expr(base)
-        self.exponent = _ensure_expr(exponent)
-        self.operands = (self.base, self.exponent)
+    def __new__ (cls, base, exponent):
+        base = _ensure_expr(base)
+        exponent = _ensure_expr(exponent)
+        if base.is_zero():
+            if isinstance(exponent, Number):
+                assert exponent.value > 0
+            return Number(1)
+        elif base.is_one():
+            return Number(1)
+        elif exponent.is_zero():
+            return Number(1)
+        elif exponent.is_one():
+            return base
+        elif isinstance(base, Number) and isinstance(exponent, Number):
+            return Number(base.value ** exponent.value)
 
-    def local_rules(self):
-        pass
+        pow = object.__new__(cls)
+        pow.base = base
+        pow.exponent = exponent
+        pow.operands = (base,exponent)
+        return pow
+
+    def local_simplify(self):
+        if isinstance(self.base, Pow):
+            inner_base = self.base.base
+            inner_exponent = self.base.exponent
+            new_exponent = self.exponent * inner_exponent
+            simplified_exponent = new_exponent.simplify()
+            return Pow(inner_base, simplified_exponent)
+        return self
 
     def __str__(self):
         return '**'
