@@ -47,7 +47,7 @@ class Expr:
 
     # assume self is simplified for these _as_sth functions
     def _as_coef_literal(self):
-       if isinstance(self, Mul):
+        if isinstance(self, Mul):
             coefficient = Number(1) 
             ops = []
             for operand in self.operands:
@@ -85,8 +85,10 @@ class Expr:
                 if new_operand is not None:
                     new_operands.append(new_operand)
 
-            new_self = type(self)(*new_operands)
-            return new_self.local_simplify()
+            current = type(self)(*new_operands)
+
+            next = current.local_simplify()
+            return next
 
 def _ensure_expr(value):
     if isinstance(value,(int, float)):
@@ -165,6 +167,7 @@ class Add (Expr):
         add.operands = tuple(ops)
         return add
 
+    #combine monomial terms
     def local_simplify(self):
         literal_to_coefs = {}
         for operand in self.operands:
@@ -250,9 +253,30 @@ class Mul (Expr):
             simplified_factor = factor.simplify()
             simplified_factors.append(simplified_factor)
 
-        return Mul (*simplified_factors)
-
+        result =  Mul (*simplified_factors)
+        distributed_result = result.distribute_add()
+        return distributed_result
     
+    # distribute over add operands. i.e. 3*(a+b) -> 3*a+3*b
+    def distribute_add(self) -> Add:
+        plus_terms:List[Add] = []
+        combine_terms:List[Expr] = []
+        for operand in self.operands:
+            if isinstance(operand, Add):
+                plus_terms.append(operand)
+            else:
+                combine_terms.append(operand)
+
+        combine_term = Mul(*combine_terms)
+
+        for plus_term in plus_terms:
+            new_term = Number(0)
+            for plus_op in plus_term.operands:
+                new_term = new_term + plus_op * combine_term
+            combine_term = new_term.simplify()
+
+        return combine_term
+
 
 #TODO: special rules: like 0^exp and 1^exp and base^0 and base^1
 

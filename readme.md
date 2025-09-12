@@ -7,9 +7,7 @@ make my commits mean something dont just say drift
 maybe rename to svmbolcore or something
 
 # to do:
+mul expand multiply to add nodes
 
-multiplication simplification (based on dicts)
-addition simplification (based on dicts)
 
-variadic add and mul. no minus or divide nodes
 

@@ -1,14 +1,18 @@
 from src.symbol import *
-from src.simplify import *
-
+from src.equation import *
 
 
 x = Variable('x')
 y = Variable('y')
 z = Variable('z')
 
-exp = 3 + x**2*4 + 2 * x * x
-exp.print_tree()
+left = 3*x+5
+right = 2*x+3
 
-new_exp = exp.simplify()
-new_exp.print_tree()
+print(f"Type of expr1: {type(left)}")
+print(f"Type of expr2: {type(right)}")
+
+eq = Eq(left, right)
+
+eq = eq.simplify()
+eq.print_tree()
