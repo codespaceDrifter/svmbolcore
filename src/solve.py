@@ -18,22 +18,25 @@ class Eq(Expr):
 
 # assumes expression is simplified
 def get_degree(expr):
-    max_degree = 0
-    def helper(expr):
-        nonlocal max_degree
-        if isinstance(expr, Pow) and isinstance(expr.base, Variable):
-            assert isinstance(expr.exponent, Number) #complex variable exponents not supported yet
-            if (expr.exponent.value > max_degree):
-                max_degree = expr.exponent.value
-        elif expr.is_leaf():
-            if isinstance(expr, Variable) and max_degree == 0:
-                max_degree = 1
-            # if number do nothing
-        else:
-            for op in expr.operands:
-                helper(op)
-    helper(expr)
-    return max_degree
+    if isinstance(expr, Number):
+        return 0
+    elif isinstance(expr, Variable):
+        return 1
+    elif isinstance(expr, Pow) and isinstance(expr.base, Variable):
+        assert isinstance(expr.exponent, Number), "Complex variable exponents not supported yet"
+        return int(expr.exponent.value)
+    elif isinstance(expr, Mul):
+        total_degree = 0
+        for operand in expr.operands:
+            total_degree += get_degree(operand)
+        return total_degree
+    elif isinstance(expr, Add):
+        max_degree = 0
+        for operand in expr.operands:
+            operand_degree = get_degree(operand)
+            if operand_degree > max_degree:
+                max_degree = operand_degree
+        return max_degree
 
 # no self definition or recurring definitions. i.e. a cant be defined with b and then b defined with a. 
 def assert_solutions_valid (solutions: dict[Variable, Expr]):
@@ -77,13 +80,25 @@ def assert_solutions_valid (solutions: dict[Variable, Expr]):
             raise ValueError('cycle definitions')
 
 def subsitute (expr, solutions: dict[Variable,Expr]):
-    pass
-
-
-
-
-
-    
+    assert_solutions_valid(solutions)
+    def helper(expr):
+        if expr in solutions:
+            return solutions[expr]
+        elif expr.is_leaf():
+            return expr
+        else:
+            new_operands = []
+            for op in expr.operands:
+                new_op = helper(op)
+                new_operands.append(new_op)
+            return type(expr)(*new_operands)
+    cur = expr
+    while True:
+        next = helper(cur)
+        if next == cur:
+            break
+        cur = next
+    return cur
 
 
 def solve(equation_list:list[Expr], vars:list[Variable]):
@@ -99,30 +114,15 @@ def solve(equation_list:list[Expr], vars:list[Variable]):
         if cur_degree > max_degree: max_degree = cur_degree
     # send to different solvers
     if max_degree == 1:
-        return solve_linear_system(Eq)
+        return solve_linear_system(simplified_list, vars)
 
 
-def solve_linear(Eq)-> Number:
+def solve_linear(expr, var)-> Number:
+    pass
+
+def solve_linear_system(exprs, vars)->dict[Variable,Expr]:
     pass
     
-def solve_quadratic(Eq)-> Number:
+def solve_quadratic(expr, var)-> Number:
     pass
-
-def solve_high_degree(Eq)->Number:
-    pass
-
-
-def solve_linear_system(list)->dict[Variable,Expr]:
-    pass
-
-
-
-
-
-
-
-
-
-
-
 
