@@ -254,8 +254,9 @@ class Mul (Expr):
             simplified_factors.append(simplified_factor)
 
         result =  Mul (*simplified_factors)
-        distributed_result = result.distribute_add()
-        return distributed_result
+        if isinstance(result, Mul):
+            result = result.distribute_add()
+        return result
     
     # distribute over add operands. i.e. 3*(a+b) -> 3*a+3*b
     def distribute_add(self) -> Add:
