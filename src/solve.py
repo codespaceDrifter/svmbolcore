@@ -12,9 +12,42 @@ class Eq(Expr):
         return '='
     
     def local_simplify(self) -> Expr:
+        simplified_left = self.left.simplify()
+        simplified_right = self.right.simplify()
+        return Eq(simplified_left,simplified_right)
+
+    def to_expr(self) -> Expr:
         new_left = self.left - self.right
         simplified_left = new_left.simplify()
         return simplified_left
+
+    # cases: seperate a from
+    # 0: a + 3 + b = 0. look for terms with a and minus both sides with it
+    # 1: 4*a + 3 + b = 0 then look for terms with a move it to minus. and then look for terms of a in the right as coef literal
+
+    '''
+    def _balance_cancel_add(self, var):
+        to_cancel_term = Number(0)
+        if self.left.isinstance(Add):
+            for op in self.operands:
+                if op.contains_var(var):
+                    to_cancel_term = op
+                    break
+        else:
+            if self.left.contains_var(var)
+                to_cancel_term = self.left
+        new_left = self.left - var
+        new_right = self.right - var
+        return Eq(new_left,new_right)
+        
+
+    def isolate(self, var: Variable):
+        assert (self.right == Number(0))
+        assert (self.left.simplified)
+        new = _balance_cancel_add(self, var)
+    '''
+
+
 
 # assumes expression is simplified
 def get_degree(expr):
@@ -106,7 +139,11 @@ def solve(equation_list:list[Expr], vars:list[Variable]):
     # assume all expressions is equal to zero
     simplified_list = []
     for e in equation_list:
-        simplified_list.append(e.simplify())
+        e = e.simplify()
+        if isinstance(e, Eq):
+            simplified_list.append(e.to_expr())
+        else:
+            simplified_list.append(e)
     # get max degree of all expressions
     max_degree = 0
     for expr in simplified_list:
@@ -116,8 +153,12 @@ def solve(equation_list:list[Expr], vars:list[Variable]):
     if max_degree == 1:
         return solve_linear_system(simplified_list, vars)
 
+# i.e. 3*a + b + 5 solve for a
+# Add: find terms with a, minus both sides with it
+# Mul: find non a terms, divide both 
+def solve_linear(expr: Expr, var: Variable)-> Number:
+    Eq(expr)
 
-def solve_linear(expr, var)-> Number:
     pass
 
 def solve_linear_system(exprs, vars)->dict[Variable,Expr]:

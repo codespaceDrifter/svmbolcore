@@ -5,6 +5,7 @@ from src.solve import *
 x = Variable('x')
 y = Variable('y')
 z = Variable('z')
-
-expr = x*y*5*z**3
-print(get_degree(expr))
+expr = x*x*3*y*5 + 2 + 2
+expr.print_tree()
+expr = expr.simplify()
+expr.print_tree()

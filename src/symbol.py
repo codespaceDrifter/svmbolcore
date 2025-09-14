@@ -3,6 +3,8 @@
 import math
 from typing import Tuple
 
+from src import Variable
+
 class Expr:
 
     def print_tree(self, indent = 0):
@@ -64,6 +66,18 @@ class Expr:
             return self.operands[0], self.operands[1]
         return self, Number(1)
 
+    '''
+    def contains_var(self,var:Variable) -> bool:
+        if self.is_leaf():
+            if self == var: return True
+        else:
+            for op in self.operands:
+                if contains_var(op):
+                    return True
+        return False
+    '''
+
+
     #hash and comparison (same logic)
     def __hash__(self): return hash(canon_key(self))
     def __eq__(self, other):
@@ -78,6 +92,8 @@ class Expr:
     def simplify(self):
         if self.is_leaf():
             return self
+        elif self.simplified == True:
+            return self
         else:
             new_operands = []
             for operand in self.operands:
@@ -85,10 +101,10 @@ class Expr:
                 if new_operand is not None:
                     new_operands.append(new_operand)
 
-            current = type(self)(*new_operands)
-
-            next = current.local_simplify()
-            return next
+            new = type(self)(*new_operands)
+            new = new.local_simplify()
+            new.simplified = True
+            return new
 
 def _ensure_expr(value):
     if isinstance(value,(int, float)):
@@ -110,6 +126,7 @@ def canon_key(expr):
 class Number(Expr):
     def __init__(self, value):
         assert isinstance(value,(int,float))
+        self.simplified = True
         self.value = float(value)
 
     def __str__(self):
@@ -117,8 +134,8 @@ class Number(Expr):
     
 class Boolean(Expr):
     def __init__(self, value):
-        super().__init__()
         assert value in (True,False)
+        self.simplified = True
         self.value = value
 
     def __str__(self):
@@ -127,6 +144,7 @@ class Boolean(Expr):
 class Variable(Expr):
     def __init__(self, name):
         self.name = name
+        self.simplified = True
     
     def __str__(self):
         return str(self.name)
@@ -165,6 +183,7 @@ class Add (Expr):
         ops.sort(key = canon_key)
         add = object.__new__(cls)
         add.operands = tuple(ops)
+        add.simplified = False
         return add
 
     #combine monomial terms
@@ -228,6 +247,7 @@ class Mul (Expr):
         ops.sort(key = canon_key)
         mul =  object.__new__(cls)
         mul.operands = tuple(ops)
+        mul.simplified = False
         return mul 
 
     def __str__(self):
@@ -302,6 +322,7 @@ class Pow (Expr):
         pow.base = base
         pow.exponent = exponent
         pow.operands = (base,exponent)
+        pow.simplified = False
         return pow
 
     def local_simplify(self):
