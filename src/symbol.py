@@ -13,6 +13,16 @@ class Expr:
             for operand in self.operands:
                 operand.print_tree(indent + 4)
 
+    def print_flat(self):
+        def str_flat(expr):
+            if expr.is_leaf():
+                return str(expr)
+            else:
+                operands = [str_flat(op) for op in expr.operands]
+                return "(" + f" {str(expr)} ".join(operands) + ")"
+        print(str_flat(self))
+
+
     # arithmatic unary
     def __neg__(self): return Mul(-1, self)
     def __pos__(self): return Mul(1, self)
@@ -48,6 +58,12 @@ class Expr:
     def is_one(self): return isinstance(self, Number) and abs(self.value - 1.0) < 1e-12
 
     # assume self is simplified for these _as_sth functions
+    def _as_add_terms(self):
+        if isinstance(self, Add):
+            return self.operands
+        else:
+            return (self,)
+
     def _as_coef_literal(self):
         if isinstance(self, Mul):
             coefficient = Number(1) 

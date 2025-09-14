@@ -1,11 +1,22 @@
 from src.symbol import *
 from src.solve import *
 
-# TEST CASE 1: Valid solutions (should pass)
 x = Variable('x')
 y = Variable('y')
-z = Variable('z')
-expr = x*x*3*y*5 + 2 + 2
-expr.print_tree()
-expr = expr.simplify()
-expr.print_tree()
+
+# Parameter (symbolic constant)
+a = Variable('a')
+
+eq1 = Eq(2*x + y,a) # = 0
+eq2 = Eq(x+y, Number(4))           # = 0
+
+equations = [eq1, eq2]
+variables = [x, y]
+
+
+solutions = solve(equations, variables)
+    
+print("Solutions:")
+for var, sol in solutions.items():
+    print(f"{var}")
+    sol.print_flat()
