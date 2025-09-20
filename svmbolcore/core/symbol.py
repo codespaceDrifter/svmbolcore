@@ -3,7 +3,6 @@
 import math
 from typing import Tuple
 
-from src import Variable
 
 class Expr:
 

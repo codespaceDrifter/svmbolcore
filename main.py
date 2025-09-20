@@ -1,9 +1,5 @@
-from src.symbol import *
-from src.solve import *
-from codegen.basics import *
-import sys
-import os
+from svmbolcore import *
 
-
+c = Variable('c')
 expr = -c ** -1
 print(str_flat(expr))

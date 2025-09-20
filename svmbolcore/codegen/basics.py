@@ -1,7 +1,8 @@
 import sys
 import os
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from src.symbol import *
+from core.symbol import *
 
 def is_sub (expr):
     if isinstance(expr, Mul) and expr.operands[0].is_negone():
