@@ -1,52 +1,46 @@
 import enum
 from .symbol import *
+from .symbol import _ensure_expr
 
 #returns an expression that all solvers assume equal to zero
 class Eq(Expr):
     def __init__(self, left: Expr, right:Expr = Number(0)):
-        self.left = left
-        self.right = right
+        self.left = _ensure_expr(left)
+        self.right = _ensure_expr(right)
         self.operands = (left,right)
-        self.simplified = False
 
     def __str__(self):
         return '='
     
-    def local_simplify(self) -> Expr:
-        simplified_left = self.left.simplify()
-        simplified_right = self.right.simplify()
-        result = Eq(simplified_left,simplified_right)
-        result.simplified = True
-        return result
-
     def to_expr(self) -> Expr:
         new_left = self.left - self.right
-        simplified_left = new_left.simplify()
-        return simplified_left
+        return new_left
 
 
 
 # assumes expression is simplified
-def get_degree(expr):
+def get_degree(expr, vars:[list]):
     if isinstance(expr, Number):
         return 0
-    elif isinstance(expr, Variable):
+    elif expr in vars:
         return 1
-    elif isinstance(expr, Pow) and isinstance(expr.base, Variable):
+    elif isinstance(expr, Pow) and expr.base in vars:
         assert isinstance(expr.exponent, Number), "Complex variable exponents not supported yet"
         return int(expr.exponent.value)
     elif isinstance(expr, Mul):
         total_degree = 0
         for operand in expr.operands:
-            total_degree += get_degree(operand)
+            total_degree += get_degree(operand, vars)
         return total_degree
     elif isinstance(expr, Add):
         max_degree = 0
         for operand in expr.operands:
-            operand_degree = get_degree(operand)
+            operand_degree = get_degree(operand, vars)
             if operand_degree > max_degree:
                 max_degree = operand_degree
         return max_degree
+    else:
+        return 0
 
 # no self definition or recurring definitions. i.e. a cant be defined with b and then b defined with a. 
 def assert_solutions_valid (solutions: dict[Variable, Expr]):
@@ -110,59 +104,77 @@ def subsitute (expr, solutions: dict[Variable,Expr]):
         cur = next
     return cur
 
+def print_solutions(sol):
+    for key,value in sol.items():
+        print('variable')
+        key.print_flat()
+        print('solution')
+        value.print_flat()
+
+
 
 def solve(equation_list:list[Expr], vars:list[Variable]):
-    # simplify expressions and change Eqs into expressions
-    # assume all expressions is equal to zero
-    simplified_list = []
+    expr_list = []
     for e in equation_list:
-        e = e.simplify()
         if isinstance(e, Eq):
-            simplified_list.append(e.to_expr())
+            expr_list.append(e.to_expr())
         else:
-            simplified_list.append(e)
+            expr_list.append(e)
     # get max degree of all expressions
     max_degree = 0
-    for expr in simplified_list:
-        cur_degree = get_degree(expr)
+    for expr in expr_list:
+        cur_degree = get_degree(expr, vars)
         if cur_degree > max_degree: max_degree = cur_degree
     # send to different solvers
     if max_degree == 1:
-        return solve_linear_system(simplified_list, vars)
+        return solve_linear_system(expr_list, vars)
 
-# i.e. 3*a + b + 5 solve for a
-# Add: find terms with a, minus both sides with it
-# Mul: find non a terms, divide both 
 def solve_linear_system(exprs: list[Expr], vars: list[Variable])->dict[Variable,Expr]:
     num_exprs = len(exprs)
     num_vars = len(vars)
     assert (num_exprs == num_vars)
+    # extract parameters and numbers coefficients for a specific variable
     #assume the expr is one degree max. therefore no pow. 
-    # TODO: change helpers to allow like parameters as coefficients so a*b * x is solvable
-    def extract_number_coef(expr, var):
+    def extract_parameter_coef(expr, var):
         terms = expr._as_add_terms()
+        coefs = Number(0)
         for term in terms:
-            coef, literal = term._as_coef_literal()
-            if var == literal:
-                assert isinstance(coef,Number)
-                return coef
-        return Number(0)
+            factors = term._as_mul_factors()
+            coef = Number(1)
+            hasVar = False
+            for factor in factors: # this case does not have var as the base of a power
+                if factor == var:
+                    hasVar = True
+                else:
+                    coef = coef * factor
+            if hasVar:
+                coefs = coefs + coef
+        return coefs
     # gets the parameters and constant and negates it
-    def extract_neg_constant_parameters(expr):
+    def extract_neg_constant_parameters(expr, vars):
         terms = expr._as_add_terms()
         neg = Number(0)
         for term in terms:
-            coef, literal = term._as_coef_literal() # numbers have literal 1 which is not in vars
-            if literal not in vars:
-                neg = neg - term
+            factors = term._as_mul_factors()
+            value = Number(1)
+            hasVar = False
+
+            for factor in factors:
+                if factor in vars:
+                    hasVar = True
+                    break
+                else:
+                    value = value * factor
+            if not hasVar:
+                neg = neg - value
         return neg
     # augmented matrix of Ax = -b. constant is negative
     matrix = []
     for expr in exprs:
         row = []
         for var in vars:
-            row.append(extract_number_coef(expr,var))
-        row.append(extract_neg_constant_parameters(expr))
+            row.append(extract_parameter_coef(expr, var))
+        row.append(extract_neg_constant_parameters(expr, vars))
         matrix.append(row)
 
 
@@ -191,7 +203,7 @@ def solve_linear_system(exprs: list[Expr], vars: list[Variable])->dict[Variable,
             literal_solution = solutions[vars[j]]
             value = value - coef_solution * literal_solution
         coef = matrix[i][i]
-        sol = (value / coef).simplify()
+        sol = value / coef
         solutions[vars[i]] = sol
     return solutions
 

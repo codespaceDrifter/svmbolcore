@@ -13,8 +13,21 @@ class Expr:
             for operand in self.operands:
                 operand.print_tree(indent + 4)
 
+    # TODO: prettier print no * /c things like this just do / c
     def print_flat(self):
         def str_flat(expr):
+            # Special case: -1 * a becomes -a
+            if (isinstance(expr, Mul) and 
+                len(expr.operands) == 2 and
+                isinstance(expr.operands[0], Number) and
+                expr.operands[0].value == -1):
+                return "-" + str_flat(expr.operands[1])
+            
+            # Special case: a ^ -1 becomes /a  
+            elif (isinstance(expr, Pow) and
+                  isinstance(expr.exponent, Number) and
+                  expr.exponent.value == -1):
+                return "/" + str_flat(expr.base)
             if expr.is_leaf():
                 return str(expr)
             else:
@@ -56,10 +69,16 @@ class Expr:
     def is_number(self): return isinstance(self,Number)
     def is_zero(self): return isinstance(self, Number) and abs(self.value) < 1e-12
     def is_one(self): return isinstance(self, Number) and abs(self.value - 1.0) < 1e-12
+    def is_negone(self): return isinstance(self, Number) and abs(self.value + 1.0) < 1e-12
 
-    # assume self is simplified for these _as_sth functions
     def _as_add_terms(self):
         if isinstance(self, Add):
+            return self.operands
+        else:
+            return (self,)
+
+    def _as_mul_factors(self):
+        if isinstance(self, Mul):
             return self.operands
         else:
             return (self,)
@@ -70,7 +89,6 @@ class Expr:
             ops = []
             for operand in self.operands:
                 if isinstance(operand, Number):
-                    # assume only ONE number exists in operands. assume already simplified
                     coefficient = operand
                 else:
                     ops.append(operand)
@@ -101,26 +119,23 @@ class Expr:
             return False
         return canon_key(self) == canon_key(other)
 
-    # simplify
-    def local_simplify(self):
-        return self
-
-    def simplify(self):
+    # expand 
+    def expand_tree(self):
         if self.is_leaf():
-            return self
-        elif self.simplified == True:
             return self
         else:
             new_operands = []
             for operand in self.operands:
-                new_operand = operand.simplify()
+                new_operand = operand.expand_tree()
                 if new_operand is not None:
                     new_operands.append(new_operand)
 
             new = type(self)(*new_operands)
-            new = new.local_simplify()
-            new.simplified = True
+            new = new.expand()
             return new
+    
+    def expand(self):
+        return self
 
 def _ensure_expr(value):
     if isinstance(value,(int, float)):
@@ -132,17 +147,16 @@ def _ensure_expr(value):
 # does not deal with logical ops for now
 # communicative ops' operands are sorted non communicative ops' operand are kept in order
 def canon_key(expr):
-    if isinstance(expr, Number): return ('NUM', str(expr))
-    elif isinstance(expr, Variable): return ('VAR', str(expr))
-    elif isinstance(expr, Add): return ('ADD', tuple(sorted(canon_key(o) for o in expr.operands)))
-    elif isinstance(expr, Mul): return ('MUL', tuple(sorted(canon_key(o) for o in expr.operands)))
-    elif isinstance(expr, Pow): return ('POW', tuple(canon_key(o) for o in expr.operands))
+    if isinstance(expr, Number): return ('0NUM', str(expr)) # put 0 in name just for it be in front for printing clarity
+    elif isinstance(expr, Variable): return ('1VAR', str(expr))
+    elif isinstance(expr, Add): return ('2ADD', tuple(sorted(canon_key(o) for o in expr.operands)))
+    elif isinstance(expr, Mul): return ('3MUL', tuple(sorted(canon_key(o) for o in expr.operands)))
+    elif isinstance(expr, Pow): return ('4POW', tuple(canon_key(o) for o in expr.operands))
 
     
 class Number(Expr):
     def __init__(self, value):
         assert isinstance(value,(int,float))
-        self.simplified = True
         self.value = float(value)
 
     def __str__(self):
@@ -151,7 +165,6 @@ class Number(Expr):
 class Boolean(Expr):
     def __init__(self, value):
         assert value in (True,False)
-        self.simplified = True
         self.value = value
 
     def __str__(self):
@@ -160,7 +173,6 @@ class Boolean(Expr):
 class Variable(Expr):
     def __init__(self, name):
         self.name = name
-        self.simplified = True
     
     def __str__(self):
         return str(self.name)
@@ -169,6 +181,7 @@ class Variable(Expr):
 # special rules. if total is 0 return 0. 
 class Add (Expr):
     def __new__(cls, *args):
+
         constant = 0
         ops = []
         def merge (expr):
@@ -187,43 +200,36 @@ class Add (Expr):
             else:
                 merge(arg)
         constant = Number(constant)
-        # if everything is constant(no ops) just return a number
-        if len(ops) == 0:
-            return constant
-        # if constant is not zero add it to ops
-        if not constant.is_zero():
-            ops.append(constant)
-        # if it's just a unary op directly return
-        if len(ops) == 1:
-            return ops[0]
-        ops.sort(key = canon_key)
-        add = object.__new__(cls)
-        add.operands = tuple(ops)
-        add.simplified = False
-        return add
-
-    #combine monomial terms
-    def local_simplify(self):
+        # combine monomial terms that have the same literals and add their coefficients
         literal_to_coefs = {}
-        for operand in self.operands:
-            coef, literal = operand._as_coef_literal()
+        for op in ops:
+            coef, literal = op._as_coef_literal()
 
             if literal in literal_to_coefs:
                 literal_to_coefs[literal] = literal_to_coefs[literal] + coef
             else:
                 literal_to_coefs[literal] = coef
 
-        terms = []
+        ops = []
         for literal, coef in literal_to_coefs.items():
-            terms.append(coef * literal)
+            if coef.is_zero() == False:
+                #ops.append(coef * literal)
+                temp = coef * literal
+                merge(temp)
 
-        simplified_terms = []
-        for term in terms:
-            simplified_term = term.simplify()
-            simplified_terms.append(simplified_term)
-
-        return Add (*simplified_terms)
-
+        # if constant is not zero add it to ops
+        if not constant.is_zero():
+            ops.append(constant)
+        # if everything is constant(no ops) just return a number
+        if len(ops) == 0:
+            return constant
+        # if it's just a unary op directly return
+        if len(ops) == 1:
+            return ops[0]
+        ops.sort(key = canon_key)
+        add = object.__new__(cls)
+        add.operands = tuple(ops)
+        return add
 
     def __str__(self):
         return '+'
@@ -239,7 +245,7 @@ class Mul (Expr):
             nonlocal coefficient
             nonlocal ops
             expr = _ensure_expr(expr)
-            #multiply numbers directly.
+            # multiply numbers directly.
             if isinstance(expr, Number):
                 coefficient *= expr.value
             else:
@@ -254,6 +260,18 @@ class Mul (Expr):
         # if coefficient is 0 return 0
         if coefficient.is_zero():
             return Number(0)
+        # combine same bases add exponents
+        base_to_exps = {}
+        for op in ops:
+            base, exp = op._as_base_exp()
+            if base in base_to_exps:
+                base_to_exps[base] = base_to_exps[base] + exp
+            else:
+                base_to_exps[base] = exp
+        ops = []
+        for base, exp in base_to_exps.items():
+            ops.append(base**exp)
+
         # if coefficient is 1 delete coefficient
         if not coefficient.is_one():
             ops.append(coefficient)
@@ -263,39 +281,13 @@ class Mul (Expr):
         ops.sort(key = canon_key)
         mul =  object.__new__(cls)
         mul.operands = tuple(ops)
-        mul.simplified = False
         return mul 
 
     def __str__(self):
         return '*'
-
-    def local_simplify(self):
-        # combine operands
-        base_to_exps = {}
-        for operand in self.operands:
-            base, exp = operand._as_base_exp()
-            if base in base_to_exps:
-                base_to_exps[base] = base_to_exps[base] + exp
-            else:
-                base_to_exps[base] = exp
-
-        # simplify terms
-        factors = []
-        for base, exp in base_to_exps.items():
-            factors.append(base**exp)
-        
-        simplified_factors = []
-        for factor in factors:
-            simplified_factor = factor.simplify()
-            simplified_factors.append(simplified_factor)
-
-        result =  Mul (*simplified_factors)
-        if isinstance(result, Mul):
-            result = result.distribute_add()
-        return result
     
     # distribute over add operands. i.e. 3*(a+b) -> 3*a+3*b
-    def distribute_add(self) -> Add:
+    def expand(self) -> Add:
         plus_terms:List[Add] = []
         combine_terms:List[Expr] = []
         for operand in self.operands:
@@ -310,17 +302,17 @@ class Mul (Expr):
             new_term = Number(0)
             for plus_op in plus_term.operands:
                 new_term = new_term + plus_op * combine_term
-            combine_term = new_term.simplify()
+            combine_term = new_term
 
         return combine_term
 
 
-#TODO: special rules: like 0^exp and 1^exp and base^0 and base^1
-
+#NOTE: maybe also make this a chain but an associative order matters chain?
 class Pow (Expr):
     def __new__ (cls, base, exponent):
         base = _ensure_expr(base)
         exponent = _ensure_expr(exponent)
+        # special rules for when bases or power is zero or one
         if base.is_zero():
             if isinstance(exponent, Number):
                 assert exponent.value > 0
@@ -333,22 +325,19 @@ class Pow (Expr):
             return base
         elif isinstance(base, Number) and isinstance(exponent, Number):
             return Number(base.value ** exponent.value)
+        # if base is pow have exponents changed to multiplications
+        if isinstance(base, Pow):
+            inner_base = base.base
+            inner_exponent = base.exponent
+            new_exponent = exponent * inner_exponent
+            base = inner_base
+            exponent = new_exponent
 
         pow = object.__new__(cls)
         pow.base = base
         pow.exponent = exponent
         pow.operands = (base,exponent)
-        pow.simplified = False
         return pow
-
-    def local_simplify(self):
-        if isinstance(self.base, Pow):
-            inner_base = self.base.base
-            inner_exponent = self.base.exponent
-            new_exponent = self.exponent * inner_exponent
-            simplified_exponent = new_exponent.simplify()
-            return Pow(inner_base, simplified_exponent)
-        return self
 
     def __str__(self):
         return '**'
@@ -373,41 +362,6 @@ class Logic(Expr):
 
     def __str__(self):
         return self.operator
-
-'''
-
-    def _apply_local_rules(self):
-        left, right = self.operands[0], self.operands[1]
-        if self.operator == '+':
-            if left.is_number() and right.is_number(): return Number(left.value + right.value)
-            eli left.is_zero(): return right
-            elif right.is_zero(): return left
-        if self.operator=='-':
-            if left.is_same(right): return Number(0)
-            elif left.is_number() and right.is_number(): return Number(left.value - right.value)
-            elif left.is_zero(): return UnaryOp('-',right)
-            elif right.is_zero(): return left
-        if self.operator=='*':
-            if left.is_number() and right.is_number(): return Number(left.value * right.value)
-            elif left.is_zero(): return Number(0)
-            elif right.is_zero(): return Number(0)
-            elif left.is_one(): return right
-            elif right.is_one(): return left
-        if self.operator=='/':
-            if right.is_zero(): raise ValueError("division by zero")
-            if left.is_number() and right.is_number(): return Number(left.value / right.value)
-            elif left.is_same(right): return Number(1)
-            elif left.is_zero(): return Number(0)
-            elif right.is_one(): return left
-        if self.operator=='**':
-            if left.is_number() and right.is_number(): return Number(left.value ** right.value)
-            elif left.is_zero(): return Number(0)
-            elif left.is_one(): return Number(1)
-            elif right.is_zero(): return Number(1)
-            elif right.is_one(): return left
-
-        return self
-'''
 
 class If(Expr):
     def __init__(self, condition: Expr, if_branch: Expr, else_branch: Expr):

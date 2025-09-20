@@ -1,22 +1,14 @@
 from src.symbol import *
 from src.solve import *
+from codegen.basics import *
+import sys
+import os
 
-x = Variable('x')
-y = Variable('y')
-
-# Parameter (symbolic constant)
 a = Variable('a')
-
-eq1 = Eq(2*x + y,a) # = 0
-eq2 = Eq(x+y, Number(4))           # = 0
-
-equations = [eq1, eq2]
-variables = [x, y]
+b = Variable('b')
+c = Variable('c')
+d = Variable('d')
 
 
-solutions = solve(equations, variables)
-    
-print("Solutions:")
-for var, sol in solutions.items():
-    print(f"{var}")
-    sol.print_flat()
+expr = -c ** -1
+print(str_flat(expr))
