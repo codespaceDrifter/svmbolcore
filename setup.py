@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 setup(
     name="svmbolcore",
-    version="0.1.0",
+    version="0.1.12",
     author="codespaceDrifter",  
     author_email="codespaceDrifter@gmail.com",  
     description="symbolic math lib that generates parallel CUDA",
@@ -21,3 +21,11 @@ setup(
 
 
 
+'''
+how to update note to self:
+-> Update version in setup.py (e.g. "0.1.0" -> "0.1.1")
+commands:
+(run in root folder where setup.py is)
+python -m build
+python -m twine upload dist/*
+'''

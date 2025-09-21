@@ -7,6 +7,7 @@ svmbolcore.egg-info/dependency_links.txt
 svmbolcore.egg-info/top_level.txt
 svmbolcore/codegen/__init__.py
 svmbolcore/codegen/basics.py
+svmbolcore/codegen/parse.py
 svmbolcore/core/__init__.py
 svmbolcore/core/calculus.py
 svmbolcore/core/solve.py
