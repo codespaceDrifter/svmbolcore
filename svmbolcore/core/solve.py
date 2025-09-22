@@ -104,13 +104,6 @@ def subsitute (expr, solutions: dict[Variable,Expr]):
         cur = next
     return cur
 
-def print_solutions(sol):
-    for key,value in sol.items():
-        print('variable')
-        key.print_flat()
-        print('solution')
-        value.print_flat()
-
 
 
 def solve(equation_list:list[Expr], vars:list[Variable]):

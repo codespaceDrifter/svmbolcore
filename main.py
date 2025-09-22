@@ -1,5 +1,16 @@
 from svmbolcore import *
 
-expr = parse_expr(" a + b = 5")
-expr.print_tree()
-print(str_flat(expr))
+vars = [
+    Variable ('a')
+    Variable ('b')
+]
+eqs = [
+    Eq ( a + b = 5)
+    Eq ( a - b = 3)
+
+]
+
+
+sols = solve (eqs, vars)
+
+print (sols_to_string_list(sols))

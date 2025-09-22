@@ -135,3 +135,9 @@ def str_flat(expr, div_need_1_prefix = True):
             result += ' ** '
             result += exponent_str
         return result
+
+def sols_to_string_list(sols):
+    str_list = []
+    for k, v in sols.items():
+        str_list.append(f"{str_flat(k)} : {str_flat(v)}")
+    return str_list

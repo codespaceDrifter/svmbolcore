@@ -1,6 +1,7 @@
 import sys
 import os
 
+from svmbolcore.codegen import parse
 from svmbolcore.codegen.basics import str_flat
 from svmbolcore.codegen.parse import parse_expr
 
@@ -102,3 +103,20 @@ new_string_14 = str_flat(expr_14)
 assert new_string_14 == test_string_14
 
 print("PARSING AND PRINTING TEST PASSED")
+
+vars = [
+    Variable ('a'),
+    Variable ('b')
+]
+eqs = [
+    parse_expr('a + b = 5'),
+    parse_expr('a - b = 3')
+]
+parse_expr('a + b = 5').print_tree()
+parse_expr('a - b = 3').print_tree()
+
+sols = solve (eqs, vars)
+for k, v in sols.items():
+    k.print_tree()
+    v.print_tree()
+print (sols_to_string_list(sols))
