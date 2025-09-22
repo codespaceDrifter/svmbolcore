@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 setup(
     name="svmbolcore",
-    version="0.1.16",
+    version="0.1.17",
     author="codespaceDrifter",  
     author_email="codespaceDrifter@gmail.com",  
     description="symbolic math lib that generates parallel CUDA",
