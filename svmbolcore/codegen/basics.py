@@ -3,6 +3,7 @@ import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from core.symbol import *
+from core.solve import Eq
 
 def is_sub (expr):
     if (isinstance(expr, Mul)
@@ -15,6 +16,7 @@ def is_div (expr):
     if isinstance(expr, Pow) and expr.operands[1].is_negone():
         return True
     return False
+
 
 '''
 complete logic pseudocode
@@ -69,7 +71,9 @@ else:
 ''' 
 
 def str_flat(expr, div_need_1_prefix = True):
-    if expr.is_leaf():
+    if isinstance(expr, Eq):
+        return str_flat(expr.left) +' = ' + str_flat(expr.right)
+    elif expr.is_leaf():
         return str(expr)
     elif isinstance(expr, Add):
         result = ''
