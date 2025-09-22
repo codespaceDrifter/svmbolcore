@@ -248,13 +248,17 @@ class Mul (Expr):
         ops = []
         for base, exp in base_to_exps.items():
             ops.append(base**exp)
+        # if no ops return coefficient 
+        if len(ops) == 0:
+            return coefficient
 
-        # if coefficient is 1 delete coefficient
+        # elif coefficient is 1 delete coefficient
         if not coefficient.is_one():
             ops.append(coefficient)
         # if only one factor just return that
         if len(ops) == 1:
             return ops[0]
+        # if only one factor just return that
         ops.sort(key = canon_key)
         mul =  object.__new__(cls)
         mul.operands = tuple(ops)
