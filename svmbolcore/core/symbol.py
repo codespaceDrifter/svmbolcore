@@ -12,29 +12,6 @@ class Expr:
             for operand in self.operands:
                 operand.print_tree(indent + 4)
 
-    # TODO: prettier print no * /c things like this just do / c
-    def print_flat(self):
-        def str_flat(expr):
-            # Special case: -1 * a becomes -a
-            if (isinstance(expr, Mul) and 
-                len(expr.operands) == 2 and
-                isinstance(expr.operands[0], Number) and
-                expr.operands[0].value == -1):
-                return "-" + str_flat(expr.operands[1])
-            
-            # Special case: a ^ -1 becomes /a  
-            elif (isinstance(expr, Pow) and
-                  isinstance(expr.exponent, Number) and
-                  expr.exponent.value == -1):
-                return "/" + str_flat(expr.base)
-            if expr.is_leaf():
-                return str(expr)
-            else:
-                operands = [str_flat(op) for op in expr.operands]
-                return "(" + f" {str(expr)} ".join(operands) + ")"
-        print(str_flat(self))
-
-
     # arithmatic unary
     def __neg__(self): return Mul(-1, self)
     def __pos__(self): return Mul(1, self)
@@ -144,6 +121,7 @@ def _ensure_expr(value):
 
 
 # does not deal with logical ops for now
+# do NOT change the key string code. the order sorted determines some other functions.
 # communicative ops' operands are sorted non communicative ops' operand are kept in order
 def canon_key(expr):
     if isinstance(expr, Number): return ('0NUM', str(expr)) # put 0 in name just for it be in front for printing clarity

@@ -34,7 +34,9 @@ class Token():
             self.prescedence += 2
         elif (token_str in ('**')):
             self.prescedence += 3
-        self.prescedence += stack_level * 4
+        elif unary == True:
+            self.prescedence += 4
+        self.prescedence += stack_level * 5
 
     # the idea is you would only consume operands with higher prescedence than yourself due to the conversation from high -> low prescedence. or it's a leaf with no prescedence.
     def to_expr(self, operands: list[Expr]):
