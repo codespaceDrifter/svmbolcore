@@ -1,9 +1,5 @@
-import sys
-import os
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from core.symbol import *
-from core.solve import Eq
+from ..core.symbol import *
+from ..core.solve import Eq
 
 def is_sub (expr):
     if (isinstance(expr, Mul)

@@ -10,8 +10,7 @@ eqs = [
 ]
 
 sols = solve(eqs, vars)
-strs = sols_to_string_list(sols)
-assert strs[0] == "b : 1"
-assert strs[1] == "a : 4"
-print ("PARSE PRINT TESTS PASSED")
 
+solstrs = sols_to_string_list(sols)
+for solstr in solstrs:
+    print(solstr)

@@ -1,9 +1,5 @@
-import sys
-import os
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from core.symbol import *
-from core.solve import Eq
+from ..core.symbol import *
+from ..core.solve import Eq
 
 # no sin cos tan log for now.
 # all multiplications MUST be explicit use a * b to mean multiplication ab will be treated as one variable named ab

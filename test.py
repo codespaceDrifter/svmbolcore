@@ -1,26 +1,17 @@
-import sys
-import os
+from svmbolcore import *
 
-from svmbolcore.codegen import parse
-from svmbolcore.codegen.basics import sols_to_string_list, str_flat
-from svmbolcore.codegen.parse import parse_expr
-from svmbolcore.core.symbol import Number
+# MUST use relative imports for pypi packages which means literally cannot import locally. using the sys append path method
+# use pip install e. to test
 
-sys.path.append(os.path.join(os.path.dirname(__file__), 'svmbolcore'))
-
-from core.symbol import *
-from core.solve import *
-from codegen.parse import *
-from codegen.basics import *
 
 # Normal add
-test_string_0 = "3 + a + b"
+test_string_0 = "3 + a + b + c"
 expr_0 = parse_expr(test_string_0)
 new_string_0 = str_flat(expr_0)
 assert new_string_0 == test_string_0
 
 # Normal add with a mul
-test_string_1 = "3 + a * b"
+test_string_1 = "3 + a * b * c"
 expr_1 = parse_expr(test_string_1)
 new_string_1 = str_flat(expr_1)
 assert new_string_1 == test_string_1
