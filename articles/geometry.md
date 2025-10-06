@@ -10,7 +10,7 @@
 proof:  
 <div align="center"><img src="./imgs/geometry/1.png" width="400"/></div>
 
-due to similar triangles:
+due to similar triangles:  
 $$\begin{aligned}
 \frac{z}{a} &= \frac{a}{c} \\
 a^2 &= zc \\
@@ -22,6 +22,7 @@ a^2 + b^2 &= c^2 \\
 
 
 > $$\text{pythagorean identity: } \sin^2{\theta} + \cos^2{\theta} = 1$$
+
 proof:  
 $$\begin{aligned}
 \sin^2{\theta} + \cos^2{\theta} &= (\frac{a}{c}) ^2 + (\frac{b}{c}) ^2 \\
@@ -61,7 +62,7 @@ think of it like many applications of the pythogorean theorem. each one collapse
 
 > $$\vec{a} \cdot \vec{b} = ||\vec{a}|| * ||\vec{b}|| * \cos(\theta)$$
 
-proof:
+proof:  
 $$\begin{aligned}
 \because \text{magnitude of vector definition: }||\vec{v}|| &= \sqrt{\vec{v} \cdot \vec{v}} \\
 ||\vec{a} - \vec{b}||^2 &= (\vec{a}-\vec{b}) \cdot (\vec{a}-\vec{b})\\
@@ -72,7 +73,6 @@ $$\begin{aligned}
 ||\vec{a}||^2 + ||\vec{b}||^2 - 2\vec{a}\cdot\vec{b} &= ||\vec{a}||^2 + ||\vec{b}||^2 - 2||\vec{a}|| * ||\vec{b}|| \cos(\theta) \\
 -2\vec{a}\cdot\vec{b} &= - 2||\vec{a}|| * ||\vec{b}|| \cos(\theta) \\
 \vec{a}\cdot\vec{b} &= ||\vec{a}|| * ||\vec{b}|| \cos(\theta) \\
-
 \end{aligned}$$
 
 
