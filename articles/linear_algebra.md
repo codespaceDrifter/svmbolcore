@@ -1,7 +1,9 @@
 ## vector space
-a __vector__ is a ordered list of expressions  
+>$$\text{vector: a ordered list of expressions}$$  
 
-a __vector space__ is a set of vectors that is a closure under addition and scalor mulitplication, and the usual rules of communativity, associativity, and distributivity apply  
+>$$\text{vector space: a set of vectors that is a closure}\\
+\text{under addition and scalor mulitplication}\\
+\text{and the usual rules of communativity, associativity, and distributivity apply}$$  
 
 vector space:  
 i.e. real number n-tuples. i.e. (4,2,5,6) , (1,6,7,8)  
@@ -32,12 +34,20 @@ i.e. polynomial functions is a subspace of continuous functions (infinite terms)
 
 ## Matrix
 
-> $$\text{Matrix Vector Mul: } A\vec{v} = a_1v_1 + ... + a_nv_n$$
+> $$\text{Matrix: a ordered rectangle of numbers, with rows and columns}$$
+
+notation: each $\vec{a_n}$ means a column of A, each $\vec{a_n}^T$ means a row of A
+
+> $$\text{Matrix Vector Mul: } A\vec{v} = \vec{a_1}v_1+ ... + \vec{a_n}v_n$$
+
+each coordinate is like an axis an element of the transformed vector scales and each row is like a direction and scale the transformed vector gets projected to.
+
+
 
 > $$c*(A\vec{v}) = A(c*\vec{v})$$
 
 proof:  
-$$c*(a_1v_1 + ... + a_nv_n) = a_1*c*v_1 + ... + a_n*c*v_n$$
+$$c*(\vec{a_1}v_1+ ... + \vec{a_n}v_n) = \vec{a_1}*c*v_1 + ... + \vec{a_n}*c*v_n$$
 
 > $$\text{Matmul: } AB = [Ab_1 , ... , Ab_n]$$
 
