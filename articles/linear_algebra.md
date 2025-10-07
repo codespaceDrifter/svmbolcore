@@ -34,7 +34,7 @@ i.e. polynomial functions is a subspace of continuous functions (infinite terms)
 
 ## Matrix
 
-> $$\text{Matrix: a ordered rectangle of numbers, with rows and columns}$$
+> $$\text{Matrix: a rectangle array of numbers arranged in rows and columns}$$
 
 notation: each $\vec{a_n}$ means a column of A, each $\vec{a_n}^T$ means a row of A
 
@@ -52,7 +52,9 @@ $$c*(\vec{a_1}v_1+ ... + \vec{a_n}v_n) = \vec{a_1}*c*v_1 + ... + \vec{a_n}*c*v_n
 > $$\text{Matmul: } AB = [Ab_1 , ... , Ab_n]$$
 
 > $$ A(B(\vec{v})) = AB(\vec{v}) $$
+
 proof:  
+
 $$ \begin{aligned}
 A(B(\vec{v})) &= A(b_1v_1 + ... + b_nv_n) \\
 A(B(\vec{v})) &= A(b_1v_1) + ... + A(b_nv_n) \\
@@ -61,8 +63,11 @@ AB(\vec{v}) &= (Ab_1)v_1 + ... + (Ab_n)v_n \\
 \because c*(A\vec{v}) &= A(c*\vec{v}) \\
 A(B(\vec{v})) &= AB(\vec{v})
 \end{aligned}$$
+
 > $$\text{Matmul associativity: }(AB)C = A(BC)$$
+
 proof:  
+
 $$ \begin{aligned}
 (AB)C &= [ABc_1, ... ,ABc_n] \\
 A(BC) &= A[Bc_1, ... ,Bc_n] \\
@@ -76,7 +81,9 @@ A(BC) &= [A(Bc_1), ... ,A(Bc_n)] \\
 > $$\text{Inverse: }A A^{-1} = I $$
 
 > $$\text{row reduce[A I] produces [I $A^{-1}$] (if possible)}$$
+
 proof:  
+
 $$ \begin{aligned}
 \text{row reduce is a series of elementary operations} \\  
 E_n*...*E_2*E_1*A &= I \\
@@ -172,5 +179,36 @@ therefore we scale each original element by it's original basis column expressed
 
 > $$\text{if B,C,D are bases for the same vector space, then }P_{BD} = P_{BC} * P_{CD}$$
 
+# internal and external direct sum 
+
+> $$\text{external direct sum: suppose that V and W are two vector spaces } \\
+\text{external direct sum V $\oplus$ W is the set of pairs  $\left( \substack{\vec{v} \\ \vec{w}} \right)$}
+
+external direct sum result is a vector space because  
+$\left( \substack{\vec{v} \\ \vec{w}} \right) + \left( \substack{\vec{v'} \\ \vec{w'}} \right) =  \left( \substack{\vec{v + v'} \\ \vec{w + w'}} \right)$,
+$c \left( \substack{\vec{v} \\ \vec{w}} \right) = \left( \substack{\vec{cv} \\ \vec{cw}} \right), \left( \substack{\vec{0} \\ \vec{0}} \right) \text{exists in it}$  
+
+if V has basis {$\vec{b_1}, ... \vec{b_n}$}, W has basis {$\vec{d_1}, ... \vec{d_n}$}, then V $\oplus$ W has the basis {$\left( \substack{\vec{b_1} \\ \vec{0} }\right),..., \left( \substack{\vec{b_n} \\ \vec{0} }\right), \left( \substack{\vec{0} \\ \vec{d_1} }\right), ... , \left( \substack{\vec{0} \\ \vec{d_n} }\right)$}
+
+> $$\text{internal direct sum: let $W_1$ and $W_2$ be subspaces of a vector space V such that any vector $\vec{v}\in$ V}\\
+\text{can be uniquely decomposed as $\vec{v} = \vec{w_1} + \vec{w_2}$ then V is the internal direct sum of $W_1$ and $W_2$}$$
+
+> $W_1 \cap W_2 = {\vec{0}}$  
+
+proof by contrapositive:  
+
+
+$$\begin{aligned}
+\text{let  }\vec{v} &= \vec{w_1} + \vec{w_2} = \vec{w1'} + \vec{w2'} \\
+\vec{w_1} - \vec{w_1'} &= \vec{w_2'} - \vec{w_2} \\
+\text{if } W_1 \cap W_2 !&= {\vec{0}}  \\
+\end{aligned}$$
+then $w_1$ and $w_1'$ do not have to be equal and $w_2$ and $w_2'$ do not have to be equal
+therefore some non zero element of W equal V and it's not unique
+
+> $$\text{the internal direct sum of two vector spaces and the external direct sum of those are isomorphoic}$$
+
+> $$\text{let V be a n+m dimensional vector space, let $W_1$ be n dimensional subspace and $W_2$ be m dimensional subspace}\\
+\text{and $W_1 \cap W_2 = \vec{0}$ then V is the internal direct sum of $W_1$ and $W_2$}$$
 
 
