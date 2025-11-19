@@ -510,9 +510,8 @@ properties:
 3: symmetry $\langle\vec{x}|\vec{y}\rangle = \langle\vec{y}|\vec{x}\rangle$  
 4: positivity if $x \neq 0$ then $\langle x|x \rangle > 0$
 
-A real vector space on which a inner product is defined is called an inner product space
 
-bilinear means a funciton of two vectors that is linear in each other. a bilinear form is positive if it satiesfies property 2 and symmetric if it satisfies property 3. a inner products is a  positive, symmetric real valued bilinear form.
+bilinear means a funciton of two vectors that is linear in each other. a bilinear form is positive if it satiesfies property 2 and symmetric if it satisfies property 3. a inner products is a  positive, symmetric real valued bilinear form. A real vector space on which a inner product is defined is called an inner product space
 
 > $$\text{the norm of a vector $\vec{x}$ is $|\vec{x}| = \sqrt{\langle\vec{x}|\vec{x}\rangle} = \sqrt{x_1^2 + x_2^2 + \cdots + x_n^2}$}$$
 
@@ -555,5 +554,34 @@ property 1 is due to $\bar{ab} = \bar{a}\bar{b}$
 
 a function of two vectors conjugate linear in the first factor and linear in the second is called sesquilinear. a sesquilinear form that is conjugate symmetric is called Hermitian.  
 
+if V is a complex vector space, then an inner product on V is any complex valued function $\langle\vec{x} | \vec{y}\rangle$ that satisfies property 1-4. which is a positive Hermitian form. A complex vector space on which an inner product is defined is called a complex inner product space  
 
+the real Schwarz inequality generalizes to complex inner products
 
+> $$\text{a bra is $\langle x|$ which means the conjugate transpose of x}$$
+
+the column vector becomes a row. real valued x as included because they have no i component
+
+> $$\text{a ket is $| y \rangle$ which means the column vector y}$$
+
+y and $| y \rangle$ can be used interchangebly
+
+> $$\langle x | y\rangle = \overline{x^T}Gy \text{ where } G_{ij} = \langle e_i | e_j\rangle \text{ and }  \langle x | = \overline{x^T}G$$
+
+(conjugate is for the complex case in real case just gets ignored)
+
+G matrix is called the metric. 
+proof:  
+
+$$\begin{aligned}
+\langle x | y\rangle  &= \langle \sum_i x_ie_i | \sum_j y_je_j\rangle  \\
+\text{by laws of linearity} & \text{ and definition of G} \\
+\langle x | y\rangle  &= \sum_{i,j}x_iG_{ij}y_j  \\
+\langle x | y\rangle  &=(x_1,\dots,x_n)\,G\,\begin{pmatrix} y_1\\ \vdots\\ y_n \end{pmatrix} = x^T G y
+
+\end{aligned}$$
+
+> $$\langle x_B | y_B\rangle = \overline{x^T}_BG_By_B \text{ where } G_{ij} = \langle b_i | b_j\rangle \text{ and }  {}_B\langle x | = \overline{x^T_B}G_B$$
+
+> $$\text{given a vector space V the dual space $V^*$ is the space of linear transformation from V to scalors }$$
+elements of $V^*$ can be called covectors
